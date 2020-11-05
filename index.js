@@ -1,90 +1,41 @@
-const http = require('http')
-const fs = require('fs')
-const port = 3000
-const path = require('path')
+import express from 'express'
+const app = express()
+const port = process.env.PORT || 3000
 
-// Setting up server
-// Creates server and gets request and response paramters
-const server = http.createServer((req, res) => {
-    // Adds public to requested URL so we have right file path
-    let filePath = './public' + req.url;
-
-    // Default page for visitor calling directly URL
-    if (filePath == './public/') {
-        filePath = './public/index.html';
-    }
-        
-    let extname = path.extname(filePath);
-    let contentType = 'text/html';
-
-    // Sets content type to the requested files extension
-    switch (extname) {
-        case '.js':
-            contentType = 'application/javascript';
-            break;
-        case '.css':
-            contentType = 'text/css';
-            break;
-        case '.json':
-            contentType = 'application/json';
-            break;
-        case '.png':
-            contentType = 'image/png';
-            break;      
-        case '.jpg':
-            contentType = 'image/jpg';
-            break;
-        case '.wav':
-            contentType = 'audio/wav';
-            break;
-    }
-
-    // Sets heads for response work out some of this later
-    let headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'OPTIONS, POST, GET',
-        'Access-Control-Max-Age': 2592000, // 30 days
-        'Content-Type': contentType
-    };
-
-    fs.readFile(filePath, function(error, content) {
-        if (error) {
-            if(error.code == 'ENOENT'){
-                fs.readFile('public/404.html', function(error, content) {
-                    res.writeHead(404, headers);
-                    res.end(content, 'utf-8');
-                });
-            } else {
-                fs.readFile('public/500.html', function(error, content) {
-                    res.writeHead(500, headers);
-                    res.end(content, 'utf-8');
-                });
-            }
-        }
-        else {
-            res.writeHead(200, headers);
-            res.end(content, 'utf-8');
-        }
-    });
-
-    if (req.method === 'OPTIONS') {
-        res.writeHead(204, headers);
-        res.end();
-    }
-})
-
-// Sets server to listen on set port
-// could append .listen to create server if we want
-// This way allows us to display errors and confirmation server started
-server.listen(port, (error) => {
-    if (error) {
-        console.log('Something went wrong ' + error);
+import http from 'http'
+// Creates http server passing in app: the express route handler
+// Server now knows how to handle request routes thanks to express
+const server = http.createServer(app)
+// Sets server to listen on: port
+server.listen(port, (err) => {
+    if (err) {
+        throw new Error('Server did not start correctly');
     } else {
-        console.log('Server is listening on port ' + port);
+        console.log('Server listening at port', port);
     }
 })
 
-module.exports = { server }
+import ioPlaceHolder from 'socket.io'
+// Need to pass in server so socket can connect to front-end/client
+// Need to set io to the imported module so we can pass in the options/paramters
+// https://stackoverflow.com/questions/29923879/pass-options-to-es6-module-imports
+export const io = ioPlaceHolder(server)
 
-let gameserver = require('./gameserver')
-gameserver.playerConnect()
+// Tells express to server static files from the public folder
+// Can put another folder here if we want multiple folders
+// They are accessed to look for the file in the order they are declared
+app.use(express.static('public'))
+
+// Express 404 error response https://expressjs.com/en/starter/faq.html
+app.use(function (req, res, next) {
+  res.status(404).send('404 error')
+})
+
+// Express 500 error response https://expressjs.com/en/starter/faq.html
+app.use(function (req, res, next) {
+  res.status(500).send('500 error, something broke!')
+})
+
+import { playerConnect } from './game_server.js'
+
+playerConnect()

@@ -1,4 +1,5 @@
-import { canvas, ctx, goals, players, goalReset, delta } from '../gameclient.js'
+import { canvas, ctx, goals, players, delta } from './game_variables.js'
+import { goalReset } from './game_functions.js'
 
 export class Ball {
     constructor() {
@@ -10,6 +11,10 @@ export class Ball {
         this.xvel = (Math.round(Math.random()) * 2 - 1) * this.speed
         this.yvel = (Math.round(Math.random()) * 2 - 1) * this.speed
         this.color = 'black';
+        this.move = function(delta) {
+            this.x += this.xvel * delta
+            this.y += this.yvel * delta
+        }
     }
     reset() {
         // Set ball to center
@@ -18,12 +23,6 @@ export class Ball {
         // Random ball direction
         this.xvel = (Math.round(Math.random()) * 2 - 1) * this.speed
         this.yvel = (Math.round(Math.random()) * 2 - 1) * this.speed
-    }
-    move() {
-        this.move = function() {
-            this.x += this.xvel * delta
-            this.y += this.yvel * delta
-        }
     }
     update() {
         // Collision detection and other update functions here
@@ -80,7 +79,6 @@ export class Ball {
             }
         }
         intersectBarrier(players)
-        
 
         // Bounce ball off wall
         // Sets x/y to edge of canvas then reverses direction
@@ -111,5 +109,110 @@ export class Ball {
         ctx.fillStyle = this.color;
         ctx.fill();
         ctx.closePath();
+    }
+}
+
+export class Barrier {
+    constructor(x, y) {
+        this.h = 100
+        this.w = 3
+        this.x = x
+        this.y = y
+        this.color = 'blue'
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.rect(this.x, this.y, this.w, this.h);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+    }
+}
+
+export class Goal {
+    constructor(side, x) {
+        this.h = 200
+        this.w = 50
+        this.x = x
+        this.y = (canvas.height/2) - (this.h/2)
+        this.side = side
+        this.color = 'purple'
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.rect(this.x, this.y, this.w, this.h);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+    }
+}
+
+export class Player {
+    constructor(side, id) {
+        this.w = 50;
+        this.h = 100;
+        this.x = canvas.width/2 - this.w/2;
+        this.y = canvas.height/2 - this.h/2;
+        this.speed = 0.3;
+        this.color = 'lightblue';
+        this.teleEnts = [];
+        this.teleExts = [];
+        this.barriers = []
+        this.keyState = {}
+        this.side = side
+        this.id = id
+        this.score = 0
+        this.draw = function() {
+            ctx.beginPath();
+            ctx.rect(this.x, this.y, this.w, this.h);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.closePath();
+        }
+        this.move = function(delta) {
+            // Moving all the players based on keyState array info they sent
+            // Moves left
+            if (this.keyState['a'] || this.keyState['ArrowLeft']) {
+                this.x -= this.speed * delta
+            }
+            // Moves right
+            if (this.keyState['d'] || this.keyState['ArrowRight']) {
+                this.x += this.speed * delta
+            }
+            // Moves up
+            if (this.keyState['w'] || this.keyState['ArrowUp']) {
+                this.y -= this.speed * delta
+            }
+            // Moves down
+            if (this.keyState['s'] || this.keyState['ArrowDown']) {
+                this.y += this.speed * delta
+            }
+        }
+    }
+    reset() {
+        if (this.side == 'left') {
+            this.x = canvas.width/4 - this.w/2;
+            this.y = canvas.height/2 - this.h/2;
+        }
+        if (this.side == 'right') {
+            this.x = ((canvas.width/4) * 3) - this.w/2;
+            this.y = canvas.height/2 - this.h/2;
+        }
+    }
+}
+
+export class Tele {
+    constructor(x, y, r, color) {
+        this.r = r;
+        this.x = x
+        this.y = y
+        this.color = color
+        this.draw = function() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.closePath();
+        }
     }
 }
