@@ -3,20 +3,24 @@ export let game = {
     timestamp: 0,
     oldTimestamp: 0,
     delta: 0,
-
     canvas: {
         width: 1600,
         height: 900
     },
-
     players: [],
     goals: [],
     balls: [],
     begin: function() {},
+    end: function() {},
 }
 
 game.setBegin = function(fun) {
     game.begin = fun || game.begin;
+    return this;
+}
+
+game.setEnd = function(fun) {
+    game.end = fun || game.begin;
     return this;
 }
 
@@ -28,8 +32,8 @@ game.ctx = ctx
 game.Ball = class Ball {
     constructor() {
         this.r = 15;
-        this.x = game.canvas.height/2;
-        this.y = game.canvas.width/2;
+        this.x = 500//game.canvas.height/2;
+        this.y = 500//game.canvas.width/2;
         this.speed = 0.2;
         this.randomDirection = () => {
             // Outputs -1 or 1 so we get random direction for the ball everytime
@@ -40,16 +44,15 @@ game.Ball = class Ball {
         this.xvel = this.randomDirection()
         this.yvel = this.randomDirection()
         this.color = 'black';
-        // this.move = function(delta) {
-        //     console.log(this.x);
-        //     this.x += this.xvel * delta
-        //     this.y += this.yvel * delta
-        // }
+        this.move = function(delta) {
+            this.x += this.xvel * delta
+            this.y += this.yvel * delta
+        }
     }
-    move(delta) {
-        this.x += this.xvel * delta
-        this.y += this.yvel * delta
-    }
+    // move(delta) {
+    //     this.x += this.xvel * delta
+    //     this.y += this.yvel * delta
+    // }
     reset() {
         // Set ball to center
         this.x = game.canvas.width/2;
@@ -143,9 +146,9 @@ game.Ball = class Ball {
     draw() {
         game.ctx.beginPath();
         game.ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+        game.ctx.closePath();
         game.ctx.fillStyle = this.color;
         game.ctx.fill();
-        game.ctx.closePath();
     }
 }
 game.Barrier = class Barrier {
@@ -159,9 +162,9 @@ game.Barrier = class Barrier {
     draw() {
         game.ctx.beginPath();
         game.ctx.rect(this.x, this.y, this.w, this.h);
+        game.ctx.closePath();
         game.ctx.fillStyle = this.color;
         game.ctx.fill();
-        game.ctx.closePath();
     }
 }
 
@@ -177,9 +180,9 @@ game.Goal = class Goal {
     draw() {
         game.ctx.beginPath();
         game.ctx.rect(this.x, this.y, this.w, this.h);
+        game.ctx.closePath();
         game.ctx.fillStyle = this.color;
         game.ctx.fill();
-        game.ctx.closePath();
     }
 }
 
@@ -187,9 +190,10 @@ game.Player = class Player {
     constructor(side, id) {
         this.w = 50;
         this.h = 100;
-        this.x = game.canvas.width/2 - this.w/2;
+        this.x = 500
         this.y = game.canvas.height/2 - this.h/2;
         this.speed = 0.3;
+		this.moveSpeed = 0;
         this.color = 'lightblue';
         this.teleEnts = [];
         this.teleExts = [];
@@ -201,29 +205,49 @@ game.Player = class Player {
         this.draw = function() {
             game.ctx.beginPath();
             game.ctx.rect(this.x, this.y, this.w, this.h);
+            game.ctx.closePath();
             game.ctx.fillStyle = this.color;
             game.ctx.fill();
-            game.ctx.closePath();
         }
-        this.move = function(delta) {
+        this.input = function(delta) {
             // Moving all the players based on keyState array info they sent
-            // Moves left
+			this.moveSpeed = this.speed * delta
+			// Moves left
             if (this.keyState['a'] || this.keyState['ArrowLeft']) {
-                this.x -= this.speed * delta
+                this.x -= this.moveSpeed
             }
             // Moves right
             if (this.keyState['d'] || this.keyState['ArrowRight']) {
-                this.x += this.speed * delta
+                this.x += this.moveSpeed
             }
             // Moves up
             if (this.keyState['w'] || this.keyState['ArrowUp']) {
-                this.y -= this.speed * delta
+                this.y -= this.moveSpeed
             }
             // Moves down
             if (this.keyState['s'] || this.keyState['ArrowDown']) {
-                this.y += this.speed * delta
+                this.y += this.moveSpeed
             }
         }
+		this.update = function() {
+	        // If player goes off canvas/field player is set back to edge
+	        // Left wall
+	        if (this.x < 0) {
+	            this.x = 0
+	        }
+	        // Right wall
+	        if (this.x + this.w > game.canvas.width) {
+	            this.x = game.canvas.width + this.w
+	        }
+	        // Top wall
+	        if (this.y < 0) {
+	            this.y = 0
+	        }
+	        // Bottom wall
+	        if (this.y + this.h > game.canvas.height) {
+	            this.y = game.canvas.height + this.h
+	        }
+		}
     }
     reset() {
         if (this.side == 'left') {
@@ -246,19 +270,22 @@ game.Tele = class Tele {
         this.draw = function() {
             game.ctx.beginPath();
             game.ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            game.ctx.closePath();
             game.ctx.fillStyle = this.color;
             game.ctx.fill();
-            game.ctx.closePath();
         }
     }
 }
 
-game.createGamePieces = function() {
+game.createGamePieces = function(player1ID, player2ID) {
     // Creating the permanant game elements
     game.goals.push(new game.Goal('left', 0))
     game.goals.push(new game.Goal('right', game.canvas.width - 50 /* < Goal Width */))
     // Hard coded goal width need better solution
     game.balls.push(new game.Ball())
+	// Create players need to set socket.id for each player is the args
+	game.players.push(new game.Player('left', player1ID))
+	game.players.push(new game.Player('right', player2ID))
 }
 game.goalReset = function() {
     for (let i = 0; i < game.balls.length; i++) {
@@ -269,14 +296,14 @@ game.goalReset = function() {
     }
 }
 // Loop through array to run functions for all the players
-game.inputPlayers = function() {
+game.inputPlayers = function(delta) {
     for (let i = 0; i < game.players.length; i++) {
-        game.players[i].input();
+        game.players[i].input(delta);
     }
 }
 game.updatePlayers = function() {
     for (let i = 0; i < game.players.length; i++) {
-        game.players[i].move();
+        game.players[i].update();
     }
 }
 game.moveBalls = (delta) => {
@@ -322,7 +349,9 @@ game.drawGoals = function() {
 // Import loop functions
 game.update = (delta) => {
     // Movement and update functions go here
-    // game.updatePlayers();
+	game.inputPlayers(delta)
+    game.updatePlayers();
+
     game.moveBalls(delta);
     game.updateBalls();
 }
@@ -330,7 +359,10 @@ game.update = (delta) => {
 game.draw = () => {
     // Clear screen
     game.ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
-    // Draw everything
+    // Drawing background
+    game.ctx.fillStyle = 'gray';
+    game.ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Draw all the game elements
     game.drawPlayers();
     game.drawBalls();
     game.drawGoals()
@@ -338,10 +370,10 @@ game.draw = () => {
 
 game.clientLoop = (timestamp) => {
     // Delta is NaN for first couple runs of loop which screws up calculations
-    // so set delta = to || 16.67 so it is always equal to a real number and
-    // does not screw up anything be multiplied by it
-    game.delta = timestamp - game.oldTimestamp || 16.67
-    game.oldTimestamp = timestamp
+    // so set delta = to or 0 so it is always equal to a real number and
+    // does not screw up anything be multiplied by it b/c it is NaN
+    game.delta = timestamp - game.oldTimestamp || 0
+    game.oldTimestamp = timestamp || 0
 
     // Set function with game.setBegin
     // Function for processing input and other things that need to happen
@@ -364,7 +396,7 @@ game.startClientLoop = () => {
 }
 
 game.serverLoop = () => {
-    game.delta = game.timestamp - game.oldTimestamp
+    game.delta = game.timestamp - game.oldTimestamp || 0
     game.oldTimestamp = game.timestamp
 
     // Set function with game.setBegin
@@ -375,8 +407,8 @@ game.serverLoop = () => {
     game.update(game.delta)
 
     // Set function with game.setEnd
-    // May need this later
-    // game.end()
+    // For Sending out game state
+    game.end()
 
     game.timestamp = Date.now()
 }

@@ -7,19 +7,19 @@ import http from 'http'
 // Server now knows how to handle request routes thanks to express
 const server = http.createServer(app)
 // Sets server to listen on: port
-server.listen(port, (err) => {
-    if (err) {
-        throw new Error('Server did not start correctly');
-    } else {
+try {
+    server.listen(port, () => {
         console.log('Server listening at port', port);
-    }
-})
+    })
+} catch (err) {
+    console.error(err)
+}
 
-import ioPlaceHolder from 'socket.io'
+import socket from 'socket.io'
 // Need to pass in server so socket can connect to front-end/client
 // Need to set io to the imported module so we can pass in the options/paramters
 // https://stackoverflow.com/questions/29923879/pass-options-to-es6-module-imports
-export const io = ioPlaceHolder(server)
+export const io = socket(server)
 
 // Tells express to server static files from the public folder
 // Can put another folder here if we want multiple folders
