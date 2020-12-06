@@ -3,14 +3,18 @@
 // different domain we don't so don't need to pass anything in
 const socket = io.connect();
 
-import { game } from './game.js'
-
-game.createGamePieces()
+import { Game } from './game.js'
 
 const canvas = document.getElementById('canvas');
-game.ctx = canvas.getContext('2d', { alpha: false });
+const ctx = canvas.getContext('2d', { alpha: false });
+
+const game = new Game(ctx)
+
 canvas.width = game.canvas.width
 canvas.height = game.canvas.height
+
+// Create the pieces for the game must happen before game loop is started
+game.createGamePieces()
 
 // Handling player input
 let keyState = {}
@@ -38,32 +42,17 @@ socket.on('connect', () => {
     keyState.id = socket.id
 });
 // Tells game to startup the mainLoop
-socket.on('start loop', game.startClientLoop)
+socket.on('start loop', startLoop)
 
-function clientBegin() {
-    // Set client ball equal to ball sent from server
-    if(gameDataChanged) {
-        gameDataChanged = false
-        game.balls[0].x = serverGameData.balls[0].x
-        game.balls[0].y = serverGameData.balls[0].y
-        game.balls[0].xvel = serverGameData.balls[0].xvel
-        game.balls[0].yvel = serverGameData.balls[0].yvel
-
-		game.players[0].x = serverGameData.players[0].x
-		game.players[0].y = serverGameData.players[0].y
-		game.players[1].x = serverGameData.players[1].x
-		game.players[1].y = serverGameData.players[1].y
-    }
+// Starts loop on clientside
+function startLoop() {
+	(() => {
+		game.startClientLoop()
+	})()
 }
-game.setBegin(clientBegin)
 
-// Handle updated gamestate from the server
-let gameDataChanged = false
-let serverGameData = {}
 socket.on('server update', serverUpdate)
 function serverUpdate(gameData) {
-    // Set ball equal to data from server so we keep game state same as
-    // authoritative game state on server
-    serverGameData = gameData
-    gameDataChanged = true
+    console.log('hello');
+	console.log(gameData);
 }

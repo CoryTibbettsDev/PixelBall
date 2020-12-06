@@ -1,420 +1,462 @@
-export let game = {
-    // Important time variables
-    timestamp: 0,
-    oldTimestamp: 0,
-    delta: 0,
-    canvas: {
-        width: 1600,
-        height: 900
-    },
-    players: [],
-    goals: [],
-    balls: [],
-    begin: function() {},
-    end: function() {},
-}
-
-game.setBegin = function(fun) {
-    game.begin = fun || game.begin;
-    return this;
-}
-
-game.setEnd = function(fun) {
-    game.end = fun || game.begin;
-    return this;
-}
-
-// Init game.ctx as empty variable so we reference here
-// but gets changed at client so we can actually draw stuff
-let ctx;
-game.ctx = ctx
-
-game.Ball = class Ball {
-    constructor() {
-        this.r = 15;
-        this.x = 500//game.canvas.height/2;
-        this.y = 500//game.canvas.width/2;
-        this.speed = 0.2;
-        this.randomDirection = () => {
-            // Outputs -1 or 1 so we get random direction for the ball everytime
-            // then multiplied by speed of ball for the x/y velocity
-            let randomDirection = ((Math.round(Math.random()) * 2 - 1) * this.speed)
-            return randomDirection
-        }
-        this.xvel = this.randomDirection()
-        this.yvel = this.randomDirection()
-        this.color = 'black';
-        this.move = function(delta) {
-            this.x += this.xvel * delta
-            this.y += this.yvel * delta
-        }
-    }
-    // move(delta) {
-    //     this.x += this.xvel * delta
-    //     this.y += this.yvel * delta
-    // }
-    reset() {
-        // Set ball to center
-        this.x = game.canvas.width/2;
-        this.y = game.canvas.height/2;
-        // Random ball direction
-        this.xvel = this.randomDirection()
-        this.yvel = this.randomDirection()
-    }
-    update() {
-        // Collision detection and other update functions here
-        // Needs to be called after move in the game update function later
-        // Naturally called before draw in game update function but that is
-        // important too
-
-        // Need arrow function so this isn't redefined to global scope
-        // when called
-        let instersectGoal = (goalArray) => {
-            for (let i of goalArray) {
-                if (this.x + this.r > i.x && // Left
-                    this.x - this.r < i.x + i.w && //Right
-                    this.y + this.r > i.y && // Top
-                    this.y - this.r < i.y + i.h) {
-                    // for (let j of players) {
-                    //     if (i.side == j.side) {
-                    //         j.score++
-                    //         // Can check if score is big enough to win here
-                    //     }
-                    // }
-                    game.goalReset()
-                }
-            }
-        }
-        instersectGoal(game.goals)
-
-        // Need arrow function so this isn't redefined to global scope
-        // when called
-        let instersectTele = (playerArray) => {
-            for (let i of playerArray) {
-                for (let j of i.teleEnts) {
-                    // Circle circle collision pythag all over it
-                    let distX = this.x - j.x
-                    let distY = this.y - j.y
-                    let distance = Math.sqrt((distX * distX) + (distY * distY))
-                    if (i.teleExts.length > 0  && distance <= this.r + j.r) {
-                        this.x = i.teleExts[0].x
-                        this.y = i.teleExts[0].y
-                    }
-                }
-            }
-        }
-        instersectTele(game.players)
-
-        let intersectBarrier = (playerArray) => {
-            for (let i of playerArray) {
-                for (let j of i.barriers) {
-                    // Doesn't check which side is closest just collision
-                    if (this.x + this.r > j.x &&
-                        this.x - this.r < j.x + j.w &&
-                        this.y + this.r > j.y &&
-                        this.y + this.r < j.y + j.h) {
-                        this.xvel = this.xvel * -1
-                    }
-                }
-            }
-        }
-        intersectBarrier(game.players)
-
-        // Bounce ball off wall
-        // Sets x/y to edge of canvas then reverses direction
-        // Left wall
-        if (this.x - this.r < 0) {
-            this.x = 0 + this.r
-            this.xvel = this.xvel * -1
-        }
-        // Right wall
-        if (this.x + this.r > game.canvas.width) {
-            this.x = game.canvas.width - this.r
-            this.xvel = this.xvel * -1
-        }
-        // Top wall
-        if (this.y - this.r < 0) {
-            this.y = 0 + this.r
-            this.yvel = this.yvel * -1
-        }
-        // Bottom wall
-        if (this.y + this.r > game.canvas.height) {
-            this.y = game.canvas.height - this.r
-            this.yvel = this.yvel * -1
-        }
-    }
-    draw() {
-        game.ctx.beginPath();
-        game.ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-        game.ctx.closePath();
-        game.ctx.fillStyle = this.color;
-        game.ctx.fill();
-    }
-}
-game.Barrier = class Barrier {
-    constructor(x, y) {
-        this.h = 100
-        this.w = 3
-        this.x = x
-        this.y = y
-        this.color = 'blue'
-    }
-    draw() {
-        game.ctx.beginPath();
-        game.ctx.rect(this.x, this.y, this.w, this.h);
-        game.ctx.closePath();
-        game.ctx.fillStyle = this.color;
-        game.ctx.fill();
-    }
-}
-
-game.Goal = class Goal {
-    constructor(side, x) {
-        this.h = 200
-        this.w = 50
-        this.x = x
-        this.y = (game.canvas.height/2) - (this.h/2)
-        this.side = side
-        this.color = 'purple'
-    }
-    draw() {
-        game.ctx.beginPath();
-        game.ctx.rect(this.x, this.y, this.w, this.h);
-        game.ctx.closePath();
-        game.ctx.fillStyle = this.color;
-        game.ctx.fill();
-    }
-}
-
-game.Player = class Player {
-    constructor(side, id) {
-        this.w = 50;
-        this.h = 100;
-        this.x = 500
-        this.y = game.canvas.height/2 - this.h/2;
-        this.speed = 0.3;
-		this.moveSpeed = 0;
-        this.color = 'lightblue';
-        this.teleEnts = [];
-        this.teleExts = [];
-        this.barriers = []
-        this.keyState = {}
-        this.side = side
-        this.id = id
-        this.score = 0
-        this.draw = function() {
-            game.ctx.beginPath();
-            game.ctx.rect(this.x, this.y, this.w, this.h);
-            game.ctx.closePath();
-            game.ctx.fillStyle = this.color;
-            game.ctx.fill();
-        }
-        this.input = function(delta) {
-            // Moving all the players based on keyState array info they sent
-			this.moveSpeed = this.speed * delta
-			// Moves left
-            if (this.keyState['a'] || this.keyState['ArrowLeft']) {
-                this.x -= this.moveSpeed
-            }
-            // Moves right
-            if (this.keyState['d'] || this.keyState['ArrowRight']) {
-                this.x += this.moveSpeed
-            }
-            // Moves up
-            if (this.keyState['w'] || this.keyState['ArrowUp']) {
-                this.y -= this.moveSpeed
-            }
-            // Moves down
-            if (this.keyState['s'] || this.keyState['ArrowDown']) {
-                this.y += this.moveSpeed
-            }
-        }
-		this.update = function() {
-	        // If player goes off canvas/field player is set back to edge
-	        // Left wall
-	        if (this.x < 0) {
-	            this.x = 0
-	        }
-	        // Right wall
-	        if (this.x + this.w > game.canvas.width) {
-	            this.x = game.canvas.width + this.w
-	        }
-	        // Top wall
-	        if (this.y < 0) {
-	            this.y = 0
-	        }
-	        // Bottom wall
-	        if (this.y + this.h > game.canvas.height) {
-	            this.y = game.canvas.height + this.h
-	        }
+export class Game {
+	// Pass in ctx which is context of the canvas so we can draw the game stuff
+	constructor(ctx) {
+		this.timestamp = 0
+		this.oldTimestamp = 0
+		this.delta = 0
+		this.canvas = {
+			width: 1600,
+			height: 900
 		}
-    }
-    reset() {
-        if (this.side == 'left') {
-            this.x = game.canvas.width/4 - this.w/2;
-            this.y = game.canvas.height/2 - this.h/2;
-        }
-        if (this.side == 'right') {
-            this.x = ((game.canvas.width/4) * 3) - this.w/2;
-            this.y = game.canvas.height/2 - this.h/2;
-        }
-    }
+		this.balls = []
+		this.goals = []
+		this.players = []
+		this.ctx = ctx
+	}
+	begin() {}
+	end() {}
+	setBegin(fun) {
+		this.begin = fun || this.begin
+	}
+	setEnd(fun) {
+		this.end = fun || this.end
+	}
+	// Need to call whenever a new game is created
+	createGamePieces(player1ID, player2ID) {
+		// Add goals
+		this.goals.push(new Goal('left', 0,
+		this.ctx, this.canvas.width, this.canvas.height))
+		// Hard code goal width need better solution
+		this.goals.push(new Goal('right', this.canvas.width - 50,
+		this.ctx, this.canvas.width, this.canvas.height))
+
+		// Add balls
+		this.balls.push(new Ball(this.goals, this.players,
+		this.ctx, this.canvas.width, this.canvas.height))
+
+		// Add players
+		this.players.push(new Player('left', player1ID, 'lightblue',
+		this.ctx, this.canvas.width, this.canvas.height))
+		this.players.push(new Player('right', player2ID, 'lightblue',
+		this.ctx, this.canvas.width, this.canvas.height))
+
+		// Call goal reset to put everything in starting positions
+		this.goalReset()
+	}
+	goalReset() {
+		console.log('reset worked homie');
+		// Iterate through array and runs reset function on every item array
+		this.players.forEach((item, i) => {
+			item.reset()
+		});
+		this.balls.forEach((item, i) => {
+			item.reset()
+		});
+	}
+	// Too much shit in here to just use forEach to loop through I think
+	drawPlayers() {
+		for(let i = 0; i < this.players.length; i++) {
+			this.players[i].draw()
+			// Loop within loop to iterate through players and the arrays
+			// associated with them like teleEnts teleExts etc.
+			for (let j = 0; j < this.players[i].teleEnts.length; j++) {
+				this.players[i].teleEnts[j].draw()
+			}
+			for (let k = 0; k < this.players[i].teleExts.length; k++) {
+				this.players[i].teleExts[k].draw()
+			}
+			for (let l = 0; l < this.players[i].barriers.length; l++) {
+				this.players[i].barriers[l].draw()
+			}
+		}
+	}
+	// Important functions that go in game loop
+	update() {
+		// Movement and update functions go here
+		// Update functions have to come after input and move so nothing goes
+		// out of bounds or ends up in the wrong place
+		this.players.forEach((item, i) => {
+			item.input(this.delta)
+			item.update()
+		});
+
+		this.balls.forEach((item, i) => {
+			item.move(this.delta)
+			item.update()
+		});
+	}
+	draw() {
+		// Clear screen
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+		// Drawing background
+		this.ctx.fillStyle = 'gray'
+		this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+		// Draw all the game elements
+		this.drawPlayers()
+
+		this.balls.forEach((item, i) => {
+			item.draw()
+		});
+		this.goals.forEach((item, i) => {
+			item.draw()
+		});
+	}
+
+	// Important game loop functions
+	clientLoop(timestamp) {
+		// Have to use arrow function to call clientLoop instead of just passing
+		// it into requestAnimationFrame because otherwise this keyword gets
+		// reset to window object when called
+		window.requestAnimationFrame((timestamp) => {
+			this.clientLoop(timestamp)
+		})
+		// timestamp can be NaN for the first couple loops sometimes which
+		// screws stuff up so set delta equal to || 0 so delta is always
+		// a real number
+		this.delta = timestamp - this.oldTimestamp || 0
+		this.oldTimestamp = timestamp || 0
+		console.log(this.delta)
+
+		// Set function with game.setBegin pass in function
+		// Funtion for processing input or other things that need to happen
+		// before update and draw
+		// this.begin()
+
+		this.update(this.delta)
+
+		// Draw functions here after update
+		this.draw()
+
+
+
+		// Set functions with game.setEnd
+		// Functions for things that need to happen after everything
+		// cleanup, updating FPS etc.
+		// this.end()
+	}
+	// IMPORTANT TIMESTAMP NOTES have to use arrow functions to maintain this
+	// however this forces me to continually pass the baton with the timestamp
+	// keep handing the callback from requestAnimationFrame to each subsequent
+	// function until we get to the actual clientLoop
+	startClientLoop() {
+		window.requestAnimationFrame((timestamp) => {
+			this.clientLoop(timestamp)
+		})
+	}
+	serverLoop() {
+		this.delta = this.timestamp - this.oldTimestamp || 0
+		this.oldTimestamp = this.timestamp || 0
+
+		// Set function with game.setBegin pass in function
+		// Funtion for processing input or other things that need to happen
+		// before update and draw
+		// this.begin()
+
+		this.update(this.delta)
+
+		// Set functions with game.setEnd
+		// Functions for things that need to happen after everything
+		// cleanup, updating FPS etc.
+		// this.end()
+
+		this.timestamp = Date.now()
+	}
+	startServerLoop() {
+		this.timestamp = Date.now()
+		this.oldTimestamp = Date.now()
+
+		// https://stackoverflow.com/questions/
+		// 2749244/javascript-setinterval-and-this-solution
+		// Use arrow function within setInterval so this keyword does not get
+		// redifined to global scope when called
+		setInterval(() => this.serverLoop(), 1000/60)
+	}
 }
 
-game.Tele = class Tele {
-    constructor(x, y, r, color) {
-        this.r = r;
-        this.x = x
-        this.y = y
-        this.color = color
-        this.draw = function() {
-            game.ctx.beginPath();
-            game.ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-            game.ctx.closePath();
-            game.ctx.fillStyle = this.color;
-            game.ctx.fill();
-        }
-    }
+// Classes for game elements
+class Ball {
+	constructor(goalArray, playerArray, ctx, canvasWidth, canvasHeight) {
+		this.r = 15
+		this.x = canvasWidth/2
+		this.y = canvasHeight/2
+		this.speed = 0.2
+		this.color = 'black'
+		this.canvasWidth = canvasWidth
+		this.canvasHeight = canvasHeight
+		this.goalArray = goalArray
+		this.playerArray = playerArray
+		this.ctx = ctx
+	}
+	randomDirection() {
+		// Outputs -1 or 1 so we get random direction for the ball everytime
+		// then multiplied by speed of ball for x/y veloctiy
+		let randomDirection = ((Math.round(Math.random()) * 2 - 1) * this.speed)
+		return randomDirection
+	}
+	move(delta) {
+		this.x += this.xvel * delta
+		this.y += this.yvel * delta
+	}
+	reset() {
+		// Set ball to center
+		this.x = this.canvasWidth/2
+		this.y = this.canvasHeight/2
+		// Radom ball direction on reset
+		this.xvel = this.randomDirection()
+		this.yvel = this.randomDirection()
+	}
+	update() {
+		// Collision detection and other update functions go here
+		// Needs to be called after move in the game update function
+		// Naturally called before game update function but that is important
+
+		// Self invoking functions to test collision for different game objects
+		// MUST USE ARROW FUNTIONS HERE otherwise this gets redifined to global
+		// scope when called
+		// MUST USE SEMICOLON AFTER EACH FUNCTION otherwise interpreter gets
+		// confused where one functions ends and another begins
+		// https://stackoverflow.com/questions/42036349/
+		// uncaught-typeerror-intermediate-value-is-not-a-function
+		// GOAL COLLISION
+		((goals) => {
+			for(let i of goals) {
+				if(this.x + this.r > i.x && // Left
+					this.x - this.r < i.x + i.w && // Right
+					this.y + this.r > i.y && // Top
+					this.y - this.r < i.y + i.h // Bottom
+				) {
+					// for(let j of playerArray) {
+					// 	if(i.side == j.side) {
+					// 		j.score++
+					// 		// Can check if score is big enought to win here
+					// 	}
+					// }
+					// CALL GOAL RESET FUNCTION
+				}
+			}
+		})(this.goalArray); // Pass in goal array from game object
+		// TELE COLLISION
+		((players) => {
+			for(let i of players) {
+				for(let j of i.teleEnts) {
+						// Circle circle collision pythag all over this guy like
+						// chicken pox
+						let distX = this.x - j.x
+						let distY = this.y - j.y
+						let distance = Math.sqrt((distX * distX) + (distY * distY))
+						if(i.teleExts.length > 0 && distance <= this.r + j.r) {
+						this.x = i.teleExts[0].x
+						this.y = i.teleExts[0].y
+					}
+				}
+			}
+		})(this.playerArray);
+		// BARRIER COLLISION
+		((players) => {
+			for(let i of players) {
+				for(let j of i.barriers) {
+					// Doesn't check which side is closest just collision
+					if(this.x + this.r > j.x &&
+						this.x - this.r < j.x + j.w &&
+						this.y + this.r > j.y &&
+						this.y - this.r < j.y + j.h
+					) {
+						this.xvel = this.xvel * -1
+					}
+				}
+			}
+		})(this.playerArray);
+		// Bounces ball of wall
+		// Sets x/y to edge of canvas then reverses direction
+		// Left wall
+		if(this.x - this.r < 0) {
+			this.x = 0 + this.r
+			this.xvel = -this.xvel
+		}
+		// Right wall
+		if(this.x + this.r > this.canvasWidth) {
+			this.x = this.canvasWidth - this.r
+			this.xvel = -this.xvel
+		}
+		// Top wall
+		if(this.y - this.r < 0) {
+			this.y = 0 + this.r
+			this.yvel = -this.yvel
+		}
+		// Bottom wall
+		if(this.y + this.r > this.canvasHeight) {
+			this.y = this.canvasHeight - this.r
+			this.yvel = -this.yvel
+		}
+	}
+	draw() {
+		this.ctx.beginPath()
+		this.ctx.arc(this.x, this.y, this.r, 0, Math.PI*2)
+		this.ctx.closePath()
+		this.ctx.fillStyle = this.color
+		this.ctx.fill()
+	}
 }
-
-game.createGamePieces = function(player1ID, player2ID) {
-    // Creating the permanant game elements
-    game.goals.push(new game.Goal('left', 0))
-    game.goals.push(new game.Goal('right', game.canvas.width - 50 /* < Goal Width */))
-    // Hard coded goal width need better solution
-    game.balls.push(new game.Ball())
-	// Create players need to set socket.id for each player is the args
-	game.players.push(new game.Player('left', player1ID))
-	game.players.push(new game.Player('right', player2ID))
+class Barrier {
+	constructor(x, y, ctx) {
+		this.h = 100
+		this.w = 2
+		this.x = x
+		this.y = y
+		this.color = 'blue'
+		this.ctx = ctx
+	}
+	draw() {
+		this.ctx.beginPath()
+		this.ctx.rect(this.x, this.y, this.w, this.h)
+		this.ctx.closePath()
+		this.ctx.fillStyle = this.color
+		this.ctx.fill()
+	}
 }
-game.goalReset = function() {
-    for (let i = 0; i < game.balls.length; i++) {
-        game.balls[i].reset();
-    }
-    for (let i = 0; i < game.players.length; i++) {
-        game.players[i].reset();
-    }
+class Goal {
+	constructor(side, x, ctx, canvasWidth, canvasHeight) {
+		this.h = 200
+		this.w = 50
+		this.x = x
+		this.y = (canvasHeight/2) - (this.h/2)
+		this.canvasWidth = canvasWidth
+		this.canvasHeight = canvasHeight
+		this.side = side
+		this.color = 'purple'
+		this.ctx = ctx
+	}
+	draw() {
+		this.ctx.beginPath()
+		this.ctx.rect(this.x, this.y, this.w, this.h)
+		this.ctx.closePath()
+		this.ctx.fillStyle = this.color
+		this.ctx.fill()
+	}
 }
-// Loop through array to run functions for all the players
-game.inputPlayers = function(delta) {
-    for (let i = 0; i < game.players.length; i++) {
-        game.players[i].input(delta);
-    }
+class Player {
+	constructor(side, id, color, ctx, canvasWidth, canvasHeight) {
+		this.w = 50
+		this.h = 100
+		this.x = this.xStartingPosition()
+		this.y = this.yStartingPosition
+		this.canvasWidth = canvasWidth
+		this.canvasHeight = canvasHeight
+		this.speed = 0.3
+		this.moveSpeed = 0
+		this.color = color
+		this.teleEnts = []
+		this.teleExts = []
+		this.barriers = []
+		this.keyState = {}
+		this.score = 0
+		this.id = id
+		this.side = side
+		this.ctx = ctx
+		this.yStartingPosition = canvasHeight/2 - this.h/2
+	}
+	xStartingPosition() {
+		let xPos;
+		if(this.side == 'left') {
+			xPos = this.canvasWidth/4 - this.w/2
+		}
+		if(this.side == 'right') {
+			xPos = this.canvasWidth * 0.75 - this.w/2
+		}
+		return xPos
+	}
+	input(delta) {
+		// Moving all the players based on the keyState info they send
+		this.moveSpeed = this.speed * delta
+		// Moves left
+		if(this.keyState['a'] || this.keyState['ArrowLeft']) {
+			this.x -= this.moveSpeed
+		}
+		// Moves Right
+		if(this.keyState['d'] || this.keyState['ArrowRight']) {
+			this.x += this.moveSpeed
+		}
+		// Moves up
+		if(this.keyState['w'] || this.keyState['ArrowUp']) {
+			this.y -= this.moveSpeed
+		}
+		// Moves down
+		if(this.keyState['s'] || this.keyState['ArrowDown']) {
+			this.y += this.moveSpeed
+		}
+		// Create game elements teleports/barriers
+		// Create Tele entrance
+		if(this.keyState['q']) {
+			this.teleEnts.push(new Tele(this.x, this.y, 50, 'green', ctx))
+			if(this.teleEnts.length > 2) {
+				// Removes first tele from array if there are too many in array
+				this.teleEnts.splice(0, 1)
+			}
+		}
+		// Create Tele exit
+		if(this.keyState['e']) {
+			this.teleExts.push(new Tele(this.x, this.y, 15, 'red'))
+			if(this.teleExts.length > 1) {
+				// Removes first from array if there are too many
+				this.teleExts.splice(0, 1)
+			}
+		}
+		// Create barrier
+		if(this.keyState['r']) {
+			if(this.barriers.length > 1) {
+				this.barriers.push(new Barrier(this.x, this.y, ctx))
+				if(this.barriers.length > 1) {
+					// Removes barries if there is already one
+					this.barriers.splice(0, 1)
+				}
+			}
+		}
+	}
+	update() {
+		// If players goes off field/canvas they are set back to the edge
+		// Left wall
+		if(this.x < 0) {
+			this.x = 0
+		}
+		// Right wall
+		if(this.x + this.w > this.canvasWidth) {
+			this.x = this.canvasWidth - this.w
+		}
+		// Top Wall
+		if(this.y < 0) {
+			this.y = 0
+		}
+		// Bottom wall
+		if(this.y + this.h > this.canvasHeight) {
+			console.log('bot');
+			this.y = this.canvasHeight - this.h
+		}
+	}
+	reset() {
+		this.x = this.xStartingPosition()
+		this.y = this.yStartingPosition
+	}
+	draw() {
+		this.ctx.beginPath()
+		this.ctx.rect(this.x, this.y, this.w, this.h)
+		this.ctx.closePath()
+		this.ctx.fillStyle = this.color
+		this.ctx.fill()
+	}
 }
-game.updatePlayers = function() {
-    for (let i = 0; i < game.players.length; i++) {
-        game.players[i].update();
-    }
-}
-game.moveBalls = (delta) => {
-    for (let i = 0; i < game.balls.length; i++) {
-        game.balls[i].move(delta);
-    }
-}
-game.updateBalls = () => {
-    for (let i = 0; i < game.balls.length; i++) {
-        game.balls[i].update();
-    }
-}
-game.drawBalls = function() {
-    for (let i = 0; i < game.balls.length; i++) {
-        game.balls[i].draw();
-    }
-}
-
-game.drawPlayers = function() {
-    for (let i = 0; i < game.players.length; i++) {
-        game.players[i].draw();
-        // Loop within loop to loop through players and then loop through
-        // the arrays associated with each player
-        // So we can draw the things associated with them
-        for (let j = 0; j < game.players[i].teleEnts.length; j++) {
-            game.players[i].teleEnts[j].draw()
-        }
-        for (let j = 0; j < game.players[i].teleExts.length; j++) {
-            game.players[i].teleExts[j].draw()
-        }
-        for (let j = 0; j < game.players[i].barriers.length; j++) {
-            game.players[i].barriers[j].draw()
-        }
-    }
-}
-// Loop through array to run functions for all the goals
-game.drawGoals = function() {
-    for (let i = 0; i < game.goals.length; i++) {
-        game.goals[i].draw()
-    }
-}
-
-// Import loop functions
-game.update = (delta) => {
-    // Movement and update functions go here
-	game.inputPlayers(delta)
-    game.updatePlayers();
-
-    game.moveBalls(delta);
-    game.updateBalls();
-}
-// Draws all the shit we see on screen
-game.draw = () => {
-    // Clear screen
-    game.ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
-    // Drawing background
-    game.ctx.fillStyle = 'gray';
-    game.ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // Draw all the game elements
-    game.drawPlayers();
-    game.drawBalls();
-    game.drawGoals()
-}
-
-game.clientLoop = (timestamp) => {
-    // Delta is NaN for first couple runs of loop which screws up calculations
-    // so set delta = to or 0 so it is always equal to a real number and
-    // does not screw up anything be multiplied by it b/c it is NaN
-    game.delta = timestamp - game.oldTimestamp || 0
-    game.oldTimestamp = timestamp || 0
-
-    // Set function with game.setBegin
-    // Function for processing input and other things that need to happen
-    // before update and draw
-    game.begin()
-
-    game.update(game.delta)
-
-    // Draw function goes here after update very important
-    game.draw()
-
-    window.requestAnimationFrame(game.clientLoop)
-
-    // Set function with game.setEnd
-    // May need this later
-    // game.end()
-}
-game.startClientLoop = () => {
-    game.clientLoop()
-}
-
-game.serverLoop = () => {
-    game.delta = game.timestamp - game.oldTimestamp || 0
-    game.oldTimestamp = game.timestamp
-
-    // Set function with game.setBegin
-    // Function for processing input and other things that need to happen
-    // before update and draw
-    game.begin()
-
-    game.update(game.delta)
-
-    // Set function with game.setEnd
-    // For Sending out game state
-    game.end()
-
-    game.timestamp = Date.now()
-}
-game.startServerLoop = () => {
-    game.timestep = Date.now()
-    game.oldTimestep = Date.now()
-
-    setInterval(game.serverLoop, 1000/60)
+class Tele {
+	constructor(x, y, r, color, ctx) {
+		this.r = r
+		this.x = x
+		this.y = y
+		this.color = this.color
+		this.ctx = ctx
+	}
+	draw() {
+		this.ctx.beginPath()
+		this.ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
+		this.ctx.closePath()
+		this.ctx.fillStyle = this.color
+		this.ctx.fill()
+	}
 }

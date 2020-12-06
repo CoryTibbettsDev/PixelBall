@@ -1,6 +1,6 @@
 import { io } from './index.js'
 
-import { game } from './public/js/game_modules/game.js'
+import { Game } from './public/js/game_modules/game.js'
 
 let placeHolder = {}
 
@@ -20,33 +20,37 @@ export function playerConnect() {
 			player1ID = socket.id
         } else if (room.length == 2) {
 			player2ID = socket.id
-
-			// Create game pieces pass in socketIDs we got on connection
-			game.createGamePieces(player1ID, player2ID)
-            // Send out players array and starts game on client and server
-            io.to('game').emit('start loop', placeHolder)
-            game.startServerLoop()
             console.log('started');
-        } else {
+
+			startGame(player1ID, player2ID)
+			io.to('game').emit('start loop', placeHolder)
+		} else {
             console.log('too many players');
         }
 
-        // Recieving keyState and what we do with it
-        socket.on('send keyState', setKeyState)
-        function setKeyState(keyState) {
-            for(let i = 0; i < game.players.length; i++) {
-                if (game.players[i].id == keyState.id) {
-                    game.players[i].keyState = keyState
-                }
-            }
-        }
+		// // Recieving keyState and what we do with it
+		// socket.on('send keyState', setKeyState)
+		// function setKeyState(keyState) {
+		//     for(let i = 0; i < game.players.length; i++) {
+		//         if (game.players[i].id == keyState.id) {
+		//             game.players[i].keyState = keyState
+		//         }
+		//     }
+		// }
     });
 }
 
-let gameData = {}
-function serverEnd() {
-    gameData.balls = game.balls
-	gameData.players = game.players
-    io.to('game').emit('server update', gameData)
+function startGame(player1ID, player2ID) {
+	const game = new Game()
+	// Create game pieces pass in socketIDs we got on connection
+	game.createGamePieces(player1ID, player2ID)
+	game.startServerLoop()
 }
-game.setEnd(serverEnd)
+
+// function serverEnd() {
+// 	gameData = {
+// 		hello: 'hello'
+// 	}
+// 	io.to('game').emit('server update', gameData)
+// }
+// game.setEnd(serverEnd)
