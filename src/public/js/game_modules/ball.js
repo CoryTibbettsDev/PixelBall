@@ -1,5 +1,5 @@
 export class Ball {
-	constructor(goalArray, playerArray, ctx, canvasWidth, canvasHeight) {
+	constructor(ctx, canvasWidth, canvasHeight) {
 		this.r = 15
 		this.x = canvasWidth/2
 		this.y = canvasHeight/2
@@ -7,8 +7,6 @@ export class Ball {
 		this.color = 'black'
 		this.canvasWidth = canvasWidth
 		this.canvasHeight = canvasHeight
-		this.goalArray = goalArray
-		this.playerArray = playerArray
 		this.ctx = ctx
 	}
 	randomDirection() {
@@ -29,7 +27,7 @@ export class Ball {
 		this.xvel = this.randomDirection()
 		this.yvel = this.randomDirection()
 	}
-	update() {
+	update(goalArray, playerArray) {
 		// Collision detection and other update functions go here
 		// Needs to be called after move in the game update function
 		// Naturally called before game update function but that is important
@@ -58,7 +56,7 @@ export class Ball {
 					// CALL GOAL RESET FUNCTION
 				}
 			}
-		})(this.goalArray); // Pass in goal array from game object
+		})(goalArray); // Pass in goal array from game object
 		// TELE COLLISION
 		((players) => {
 			for(let i of players) {
@@ -74,7 +72,7 @@ export class Ball {
 					}
 				}
 			}
-		})(this.playerArray);
+		})(playerArray);
 		// BARRIER COLLISION
 		((players) => {
 			for(let i of players) {
@@ -89,7 +87,7 @@ export class Ball {
 					}
 				}
 			}
-		})(this.playerArray);
+		})(playerArray);
 		// Bounces ball of wall
 		// Sets x/y to edge of canvas then reverses direction
 		// Left wall

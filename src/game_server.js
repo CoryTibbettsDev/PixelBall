@@ -2,55 +2,37 @@ import { io } from './index.js'
 
 import { Game } from './public/js/game_modules/game.js'
 
-let placeHolder = {}
-
 // Stuff happens on connection to socket
 // Apparently can say io.on() or io.sockets.on()
-// Don't know why they set it up that way
 export function playerConnect() {
-	let player1ID, player2ID
+	// Array to store all the players in the matchmaking queue
+	let inQueue = []
     io.on('connection', socket => {
-        console.log('got a new connection from:', socket.id);
-        socket.join('game')
-        // Gets the room of our game so we can see sockets attached to the room
-        // and it's length
-        let room = io.sockets.adapter.rooms['game'];
-        // Create players on connection
-        if (room.length == 1) {
-			player1ID = socket.id
-        } else if (room.length == 2) {
-			player2ID = socket.id
-            console.log('started');
+		console.log('got a new connection from:', socket.id);
+		inQueue.push(socket)
 
-			startGame(player1ID, player2ID)
-			io.to('game').emit('start loop', placeHolder)
-		} else {
-            console.log('too many players');
-        }
-
-		// // Recieving keyState and what we do with it
-		// socket.on('send keyState', setKeyState)
-		// function setKeyState(keyState) {
-		//     for(let i = 0; i < game.players.length; i++) {
-		//         if (game.players[i].id == keyState.id) {
-		//             game.players[i].keyState = keyState
-		//         }
-		//     }
-		// }
+		if(inQueue.length > 1) {
+			let roomName = 'game' + inQueue[0].id + inQueue[1].id
+			// Adds the first two players inQueue to a room together
+			inQueue[0].join(roomName)
+			inQueue[1].join(roomName)
+			let player1ID = inQueue[0].id
+			let player2ID = inQueue[1].id
+			// Removes the players from queue since they are now in a game room
+			inQueue.splice(0, 2)
+			startGame(roomName, io, socket, player1ID, player2ID)
+		}
     });
 }
 
-function startGame(player1ID, player2ID) {
-	const game = new Game()
+function startGame(gameRoom, io, socket, player1ID, player2ID) {
+	const game = new Game(gameRoom)
 	// Create game pieces pass in socketIDs we got on connection
 	game.createGamePieces(player1ID, player2ID)
-	game.startServerLoop()
-}
 
-// function serverEnd() {
-// 	gameData = {
-// 		hello: 'hello'
-// 	}
-// 	io.to('game').emit('server update', gameData)
-// }
-// game.setEnd(serverEnd)
+	io.to(gameRoom).emit('start loop', 'place holder')
+	// Pass io into serverloop so it can sent info to game clients
+	game.startServerLoop(io)
+	// Recieving keyState and what we do with it
+	socket.on('send keyState', game.setKeyState)
+}

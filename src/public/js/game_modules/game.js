@@ -4,7 +4,7 @@ import { Player } from './player.js'
 
 export class Game {
 	// Pass in ctx which is context of the canvas so we can draw the game stuff
-	constructor(ctx) {
+	constructor(gameRoom, ctx) {
 		this.timestamp = 0
 		this.oldTimestamp = 0
 		this.delta = 0
@@ -16,14 +16,31 @@ export class Game {
 		this.goals = []
 		this.players = []
 		this.ctx = ctx
+		this.gameRoom = gameRoom
 	}
-	begin() {}
-	end() {}
-	setBegin(fun) {
-		this.begin = fun || this.begin
+	// begin() {}
+	// end() {}
+	// setBegin(fun) {
+	// 	this.begin = fun || this.begin
+	// }
+	// setEnd(fun) {
+	// 	this.end = fun || this.end
+	// }
+	serverEnd(io) {
+		let gameData = {
+			balls: this.balls,
+			players: this.players
+		}
+		io.to(this.gameRoom).emit('server update', gameData)
 	}
-	setEnd(fun) {
-		this.end = fun || this.end
+	setKeyState(keyState) {
+		// (() => {
+		// 	for(let i = 0; i < this.players.length; i++) {
+		// 		if (this.players[i].id == keyState.id) {
+		// 			this.players[i].keyState = keyState
+		// 		}
+		// 	}
+		// })()
 	}
 	// Need to call whenever a new game is created
 	createGamePieces(player1ID, player2ID) {
@@ -35,7 +52,7 @@ export class Game {
 		this.ctx, this.canvas.width, this.canvas.height))
 
 		// Add balls
-		this.balls.push(new Ball(this.goals, this.players,
+		this.balls.push(new Ball(
 		this.ctx, this.canvas.width, this.canvas.height))
 
 		// Add players
@@ -86,7 +103,7 @@ export class Game {
 
 		this.balls.forEach((item, i) => {
 			item.move(this.delta)
-			item.update()
+			item.update(this.goals, this.players)
 		});
 	}
 	draw() {
@@ -146,7 +163,7 @@ export class Game {
 			this.clientLoop(timestamp)
 		})
 	}
-	serverLoop() {
+	serverLoop(io) {
 		this.delta = this.timestamp - this.oldTimestamp || 0
 		this.oldTimestamp = this.timestamp || 0
 
@@ -157,14 +174,13 @@ export class Game {
 
 		this.update(this.delta)
 
-		// Set functions with game.setEnd
 		// Functions for things that need to happen after everything
 		// cleanup, updating FPS etc.
-		// this.end()
+		this.serverEnd(io)
 
 		this.timestamp = Date.now()
 	}
-	startServerLoop() {
+	startServerLoop(io) {
 		this.timestamp = Date.now()
 		this.oldTimestamp = Date.now()
 
@@ -172,6 +188,8 @@ export class Game {
 		// 2749244/javascript-setinterval-and-this-solution
 		// Use arrow function within setInterval so this keyword does not get
 		// redifined to global scope when called
-		setInterval(() => this.serverLoop(), 1000/60)
+		setInterval(() => {
+			this.serverLoop(io)
+		}, 1000/60)
 	}
 }

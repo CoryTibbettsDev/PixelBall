@@ -8,7 +8,8 @@ import { Game } from './game.js'
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d', { alpha: false });
 
-const game = new Game(ctx)
+let gameRoom;
+const game = new Game(gameRoom, ctx)
 
 canvas.width = game.canvas.width
 canvas.height = game.canvas.height
@@ -53,6 +54,10 @@ function startLoop() {
 
 socket.on('server update', serverUpdate)
 function serverUpdate(gameData) {
-    console.log('hello');
-	console.log(gameData);
+	gameData.balls.forEach((item, i) => {
+		game.balls[i].xvel = item.xvel
+		game.balls[i].yvel = item.yvel
+		game.balls[i].x = item.x
+		game.balls[i].y = item.y
+	});
 }
