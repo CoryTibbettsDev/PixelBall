@@ -8,9 +8,17 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <canvas id="canvas"></canvas>
+	<h1 class="homeElement">Hello and Welcome to PixelBall</h1>
+	<p class="homeElement">Do not let this websites appearance put you off</p>
+	<p class="homeElement">The guy who made it is very tired</p>
+
+	<button type="button" class="homeElement" id="matchmakingButton">
+		Join Game Queue
+	</button>
+
+	<canvas class="gameElement" id="canvas"></canvas>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="js/game_modules/game_client.js"></script>
+	<script type="module" src="js/game_modules/game_client.js"></script>
 </body>
 </html>

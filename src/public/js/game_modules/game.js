@@ -17,20 +17,8 @@ export class Game {
 		this.players = []
 		this.ctx = ctx
 		this.gameRoom = gameRoom
-	}
-	serverEnd(io) {
-		let gameData = {
-			balls: this.balls,
-			players: this.players
-		}
-		io.to(this.gameRoom).emit('server update', gameData)
-	}
-	setKeyState(keyState) {
-		for (let i = 0; i < this.players.length; i++) {
-			if(this.players[i].id == keyState.id) {
-				this.players[i].keyState = keyState
-			}
-		}
+		this.gameEnds = false
+		this.interval = function() {}
 	}
 	// Need to call whenever a new game is created
 	createGamePieces(player1ID, player2ID) {
@@ -53,8 +41,14 @@ export class Game {
 		// Call goal reset to put everything in starting positions
 		this.goalReset()
 	}
+	setKeyState(keyState) {
+		for (let i = 0; i < this.players.length; i++) {
+			if(this.players[i].id == keyState.id) {
+				this.players[i].keyState = keyState
+			}
+		}
+	}
 	goalReset() {
-		console.log('reset worked homie');
 		// Iterate through array and runs reset function on every item array
 		this.players.forEach((item, i) => {
 			item.reset()
@@ -63,8 +57,16 @@ export class Game {
 			item.reset()
 		});
 	}
-	gameEnds() {
-		console.log('game ends');
+	serverEnd(io) {
+		if (this.gameEnds) {
+			io.to(this.gameRoom).emit('gameEnds', 'game over')
+			clearInterval(this.interval)
+		}
+		let gameData = {
+			balls: this.balls,
+			players: this.players
+		}
+		io.to(this.gameRoom).emit('server update', gameData)
 	}
 	// Too much shit in here to just use forEach to loop through I think
 	drawPlayers(ctx) {
@@ -102,7 +104,7 @@ export class Game {
 			}
 			// Check if game should end this loop
 			if (item.gameEnds) {
-				this.gameEnds()
+				this.gameEnds = true
 			}
 		});
 	}
@@ -176,7 +178,7 @@ export class Game {
 		// 2749244/javascript-setinterval-and-this-solution
 		// Use arrow function within setInterval so this keyword does not get
 		// redifined to global scope when called
-		setInterval(() => {
+		this.interval = setInterval(() => {
 			this.serverLoop(io)
 		}, 1000/60)
 	}

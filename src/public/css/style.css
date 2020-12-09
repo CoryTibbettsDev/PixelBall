@@ -2,6 +2,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+	text-align: center;
 }
 
 html, body {
@@ -16,4 +17,14 @@ canvas {
     /* Other positions will not do this */
     position: absolute;
     background-color: darkgray;
+}
+
+button {
+	width: 150px;
+	height: 50px;
+	margin: auto;
+	border-radius: 10px;
+	text-align: center;
+	background-color: lightgray;
+	color: blue;
 }
