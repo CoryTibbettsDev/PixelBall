@@ -2,7 +2,7 @@ import { Barrier } from './barrier.js'
 import { Tele } from './tele.js'
 
 export class Player {
-	constructor(side, id, color, ctx, canvasWidth, canvasHeight) {
+	constructor(side, id, color, canvasWidth, canvasHeight) {
 		this.w = 50
 		this.h = 100
 		this.x = this.xStartingPosition()
@@ -16,10 +16,10 @@ export class Player {
 		this.teleExts = []
 		this.barriers = []
 		this.keyState = {}
+		this.oldKeyState = {}
 		this.score = 0
 		this.id = id
 		this.side = side
-		this.ctx = ctx
 		this.yStartingPosition = canvasHeight/2 - this.h/2
 	}
 	xStartingPosition() {
@@ -53,15 +53,15 @@ export class Player {
 		}
 		// Create game elements teleports/barriers
 		// Create Tele entrance
-		if(this.keyState['q']) {
-			this.teleEnts.push(new Tele(this.x, this.y, 50, 'green', ctx))
+		if(this.keyState['q'] && !this.oldKeyState['q']) {
+			this.teleEnts.push(new Tele(this.x, this.y, 50, 'green'))
 			if(this.teleEnts.length > 2) {
 				// Removes first tele from array if there are too many in array
 				this.teleEnts.splice(0, 1)
 			}
 		}
 		// Create Tele exit
-		if(this.keyState['e']) {
+		if(this.keyState['e'] && !this.oldKeyState['e']) {
 			this.teleExts.push(new Tele(this.x, this.y, 15, 'red'))
 			if(this.teleExts.length > 1) {
 				// Removes first from array if there are too many
@@ -69,15 +69,15 @@ export class Player {
 			}
 		}
 		// Create barrier
-		if(this.keyState['r']) {
+		if(this.keyState['r'] && !this.oldKeyState['r']) {
+			this.barriers.push(new Barrier(this.x, this.y))
 			if(this.barriers.length > 1) {
-				this.barriers.push(new Barrier(this.x, this.y, ctx))
-				if(this.barriers.length > 1) {
-					// Removes barries if there is already one
-					this.barriers.splice(0, 1)
-				}
+				// Removes barries if there is already one
+				this.barriers.splice(0, 1)
 			}
 		}
+		// Store old keyState
+		this.oldKeyState = this.keyState
 	}
 	update() {
 		// If players goes off field/canvas they are set back to the edge
@@ -95,7 +95,6 @@ export class Player {
 		}
 		// Bottom wall
 		if(this.y + this.h > this.canvasHeight) {
-			console.log('bot');
 			this.y = this.canvasHeight - this.h
 		}
 	}
@@ -103,11 +102,11 @@ export class Player {
 		this.x = this.xStartingPosition()
 		this.y = this.yStartingPosition
 	}
-	draw() {
-		this.ctx.beginPath()
-		this.ctx.rect(this.x, this.y, this.w, this.h)
-		this.ctx.closePath()
-		this.ctx.fillStyle = this.color
-		this.ctx.fill()
+	draw(ctx) {
+		ctx.beginPath()
+		ctx.rect(this.x, this.y, this.w, this.h)
+		ctx.closePath()
+		ctx.fillStyle = this.color
+		ctx.fill()
 	}
 }

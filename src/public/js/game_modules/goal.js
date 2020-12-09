@@ -8,13 +8,12 @@ export class Goal {
 		this.canvasHeight = canvasHeight
 		this.side = side
 		this.color = 'purple'
-		this.ctx = ctx
 	}
-	draw() {
-		this.ctx.beginPath()
-		this.ctx.rect(this.x, this.y, this.w, this.h)
-		this.ctx.closePath()
-		this.ctx.fillStyle = this.color
-		this.ctx.fill()
+	draw(ctx) {
+		ctx.beginPath()
+		ctx.rect(this.x, this.y, this.w, this.h)
+		ctx.closePath()
+		ctx.fillStyle = this.color
+		ctx.fill()
 	}
 }

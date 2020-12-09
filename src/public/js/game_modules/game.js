@@ -18,14 +18,6 @@ export class Game {
 		this.ctx = ctx
 		this.gameRoom = gameRoom
 	}
-	// begin() {}
-	// end() {}
-	// setBegin(fun) {
-	// 	this.begin = fun || this.begin
-	// }
-	// setEnd(fun) {
-	// 	this.end = fun || this.end
-	// }
 	serverEnd(io) {
 		let gameData = {
 			balls: this.balls,
@@ -34,13 +26,11 @@ export class Game {
 		io.to(this.gameRoom).emit('server update', gameData)
 	}
 	setKeyState(keyState) {
-		// (() => {
-		// 	for(let i = 0; i < this.players.length; i++) {
-		// 		if (this.players[i].id == keyState.id) {
-		// 			this.players[i].keyState = keyState
-		// 		}
-		// 	}
-		// })()
+		for (let i = 0; i < this.players.length; i++) {
+			if(this.players[i].id == keyState.id) {
+				this.players[i].keyState = keyState
+			}
+		}
 	}
 	// Need to call whenever a new game is created
 	createGamePieces(player1ID, player2ID) {
@@ -52,14 +42,13 @@ export class Game {
 		this.ctx, this.canvas.width, this.canvas.height))
 
 		// Add balls
-		this.balls.push(new Ball(
-		this.ctx, this.canvas.width, this.canvas.height))
+		this.balls.push(new Ball(this.canvas.width, this.canvas.height))
 
 		// Add players
 		this.players.push(new Player('left', player1ID, 'lightblue',
-		this.ctx, this.canvas.width, this.canvas.height))
+		this.canvas.width, this.canvas.height))
 		this.players.push(new Player('right', player2ID, 'lightblue',
-		this.ctx, this.canvas.width, this.canvas.height))
+		this.canvas.width, this.canvas.height))
 
 		// Call goal reset to put everything in starting positions
 		this.goalReset()
@@ -74,52 +63,63 @@ export class Game {
 			item.reset()
 		});
 	}
+	gameEnds() {
+		console.log('game ends');
+	}
 	// Too much shit in here to just use forEach to loop through I think
-	drawPlayers() {
+	drawPlayers(ctx) {
 		for(let i = 0; i < this.players.length; i++) {
-			this.players[i].draw()
+			this.players[i].draw(ctx)
 			// Loop within loop to iterate through players and the arrays
 			// associated with them like teleEnts teleExts etc.
 			for (let j = 0; j < this.players[i].teleEnts.length; j++) {
-				this.players[i].teleEnts[j].draw()
+				this.players[i].teleEnts[j].draw(ctx)
 			}
 			for (let k = 0; k < this.players[i].teleExts.length; k++) {
-				this.players[i].teleExts[k].draw()
+				this.players[i].teleExts[k].draw(ctx)
 			}
 			for (let l = 0; l < this.players[i].barriers.length; l++) {
-				this.players[i].barriers[l].draw()
+				this.players[i].barriers[l].draw(ctx)
 			}
 		}
 	}
 	// Important functions that go in game loop
-	update() {
+	update(delta) {
 		// Movement and update functions go here
 		// Update functions have to come after input and move so nothing goes
 		// out of bounds or ends up in the wrong place
 		this.players.forEach((item, i) => {
-			item.input(this.delta)
+			item.input(delta)
 			item.update()
 		});
 
 		this.balls.forEach((item, i) => {
-			item.move(this.delta)
+			item.move(delta)
 			item.update(this.goals, this.players)
+			// Check if ball scored this loop
+			if (item.scored) {
+				this.goalReset()
+			}
+			// Check if game should end this loop
+			if (item.gameEnds) {
+				this.gameEnds()
+			}
 		});
 	}
-	draw() {
+	draw(ctx) {
 		// Clear screen
-		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 		// Drawing background
-		this.ctx.fillStyle = 'gray'
-		this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+		ctx.fillStyle = 'gray'
+		ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
 		// Draw all the game elements
-		this.drawPlayers()
+		this.drawPlayers(ctx)
 
 		this.balls.forEach((item, i) => {
-			item.draw()
+			item.draw(ctx)
 		});
 		this.goals.forEach((item, i) => {
-			item.draw()
+			item.draw(ctx)
 		});
 	}
 
@@ -137,22 +137,10 @@ export class Game {
 		this.delta = timestamp - this.oldTimestamp || 0
 		this.oldTimestamp = timestamp || 0
 
-		// Set function with game.setBegin pass in function
-		// Funtion for processing input or other things that need to happen
-		// before update and draw
-		// this.begin()
-
 		this.update(this.delta)
 
 		// Draw functions here after update
-		this.draw()
-
-
-
-		// Set functions with game.setEnd
-		// Functions for things that need to happen after everything
-		// cleanup, updating FPS etc.
-		// this.end()
+		this.draw(this.ctx)
 	}
 	// IMPORTANT TIMESTAMP NOTES have to use arrow functions to maintain this
 	// however this forces me to continually pass the baton with the timestamp

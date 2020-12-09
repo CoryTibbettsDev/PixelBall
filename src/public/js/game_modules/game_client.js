@@ -4,6 +4,8 @@
 const socket = io.connect();
 
 import { Game } from './game.js'
+import { Tele } from './tele.js'
+import { Barrier } from './barrier.js'
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d', { alpha: false });
@@ -19,35 +21,43 @@ game.createGamePieces()
 
 // Handling player input
 let keyState = {}
+let started = false
 // Need arrow function here so the this keyword doesn't get redifined to
 // global scope when called (This was for when this was a part of Player object)
 // Changes keyState instead of changing speed directly on keypress
 // found to be more responsive this way idk why
 window.addEventListener('keydown', (e) => {
     keyState[e.key] = true
-	sendKeyState()
+	keyState.id = socket.id
+	keyState.gameRoom = game.gameRoom
+	sendKeyState(keyState)
 }, true)
 window.addEventListener('keyup', (e) => {
     keyState[e.key] = false
-	sendKeyState()
+	keyState.id = socket.id
+	keyState.gameRoom = game.gameRoom
+	sendKeyState(keyState)
 }, true)
-function sendKeyState() {
-	// Sound out keystate every update we capture on client and then send to
-    // the server to process input and change game state
-    socket.emit('send keyState', keyState)
+function sendKeyState(keyState) {
+	// Have to check if game is started before sending stuff so we know server
+	// can except input
+	if (started) {
+		socket.emit('clientKeyState', keyState)
+	}
 }
 
 // Stuff happens on connection
 socket.on('connect', () => {
     console.log('connected on socket', socket.id);
-    keyState.id = socket.id
 });
 // Tells game to startup the mainLoop
 socket.on('start loop', startLoop)
 
 // Starts loop on clientside
-function startLoop() {
+function startLoop(gameRoom) {
 	(() => {
+		started = true
+		game.gameRoom = gameRoom
 		game.startClientLoop()
 	})()
 }
@@ -59,5 +69,23 @@ function serverUpdate(gameData) {
 		game.balls[i].yvel = item.yvel
 		game.balls[i].x = item.x
 		game.balls[i].y = item.y
+	});
+	gameData.players.forEach((item, i) => {
+		game.players[i].x = item.x
+		game.players[i].y = item.y
+
+		// Create new teles that are equal to the teles server sent
+		for(let j = 0; j < item.teleEnts.length; j++) {
+			game.players[i].teleEnts[j] = new Tele(item.teleEnts[j].x,
+			item.teleEnts[j].y, item.teleEnts[j].r, item.teleEnts[j].color)
+		}
+		for(let k = 0; k < item.teleExts.length; k++) {
+			game.players[i].teleExts[k] = new Tele(item.teleExts[k].x,
+			item.teleExts[k].y, item.teleExts[k].r, item.teleExts[k].color)
+		}
+		for(let l = 0; l < item.barriers.length; l++) {
+			game.players[i].barriers[l] = new Barrier(item.barriers[l].x,
+			item.barriers[l].y)
+		}
 	});
 }

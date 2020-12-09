@@ -1,5 +1,5 @@
 export class Ball {
-	constructor(ctx, canvasWidth, canvasHeight) {
+	constructor(canvasWidth, canvasHeight) {
 		this.r = 15
 		this.x = canvasWidth/2
 		this.y = canvasHeight/2
@@ -7,7 +7,8 @@ export class Ball {
 		this.color = 'black'
 		this.canvasWidth = canvasWidth
 		this.canvasHeight = canvasHeight
-		this.ctx = ctx
+		this.scored = false
+		this.gameEnds = false
 	}
 	randomDirection() {
 		// Outputs -1 or 1 so we get random direction for the ball everytime
@@ -28,6 +29,7 @@ export class Ball {
 		this.yvel = this.randomDirection()
 	}
 	update(goalArray, playerArray) {
+		this.scored = false;
 		// Collision detection and other update functions go here
 		// Needs to be called after move in the game update function
 		// Naturally called before game update function but that is important
@@ -47,13 +49,19 @@ export class Ball {
 					this.y + this.r > i.y && // Top
 					this.y - this.r < i.y + i.h // Bottom
 				) {
-					// for(let j of playerArray) {
-					// 	if(i.side == j.side) {
-					// 		j.score++
-					// 		// Can check if score is big enought to win here
-					// 	}
-					// }
-					// CALL GOAL RESET FUNCTION
+					for(let j of playerArray) {
+						if(i.side == j.side) {
+							j.score++
+							console.log(j.score);
+							if (j.score >= 3) {
+								this.gameEnds = true
+							}
+							// Can check if score is big enough to win here
+						}
+					}
+					// It sucks but just say ball scored so game object can
+					// handle reset
+					this.scored = true
 				}
 			}
 		})(goalArray); // Pass in goal array from game object
@@ -111,11 +119,11 @@ export class Ball {
 			this.yvel = -this.yvel
 		}
 	}
-	draw() {
-		this.ctx.beginPath()
-		this.ctx.arc(this.x, this.y, this.r, 0, Math.PI*2)
-		this.ctx.closePath()
-		this.ctx.fillStyle = this.color
-		this.ctx.fill()
+	draw(ctx) {
+		ctx.beginPath()
+		ctx.arc(this.x, this.y, this.r, 0, Math.PI*2)
+		ctx.closePath()
+		ctx.fillStyle = this.color
+		ctx.fill()
 	}
 }
