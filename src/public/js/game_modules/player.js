@@ -108,5 +108,9 @@ export class Player {
 		ctx.closePath()
 		ctx.fillStyle = this.color
 		ctx.fill()
+
+		// Draw text for the score
+		ctx.font = '48px serif';
+		ctx.fillText(this.score, this.xStartingPosition(), this.yStartingPosition);
 	}
 }

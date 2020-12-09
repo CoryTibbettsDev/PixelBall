@@ -35,7 +35,7 @@ export class Game {
 		// Add players
 		this.players.push(new Player('left', player1ID, 'lightblue',
 		this.canvas.width, this.canvas.height))
-		this.players.push(new Player('right', player2ID, 'lightblue',
+		this.players.push(new Player('right', player2ID, 'red',
 		this.canvas.width, this.canvas.height))
 
 		// Call goal reset to put everything in starting positions

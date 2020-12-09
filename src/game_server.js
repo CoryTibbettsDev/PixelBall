@@ -38,7 +38,6 @@ export function playerConnect() {
 	});
 }
 function joinGame(io, gameRoom) {
-	console.log('emit');
 	io.to(gameRoom).emit('joinGame', gameRoom)
 }
 function startGame(games, gameRoom, io, socket, player1ID, player2ID) {
