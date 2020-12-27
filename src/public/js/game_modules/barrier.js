@@ -1,10 +1,10 @@
 export class Barrier {
-	constructor(x, y) {
+	constructor(x, y, color) {
 		this.h = 100
 		this.w = 2
 		this.x = x
 		this.y = y
-		this.color = 'blue'
+		this.color = color
 	}
 	draw(ctx) {
 		ctx.beginPath()

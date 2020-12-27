@@ -33,10 +33,10 @@ export class Game {
 		this.balls.push(new Ball(this.canvas.width, this.canvas.height))
 
 		// Add players
-		this.players.push(new Player('left', player1ID, 'lightblue',
-		this.canvas.width, this.canvas.height))
-		this.players.push(new Player('right', player2ID, 'red',
-		this.canvas.width, this.canvas.height))
+		this.players.push(new Player('left', player1ID, 'lightblue', 'green',
+		'purple', 'turqoise', this.canvas.width, this.canvas.height))
+		this.players.push(new Player('right', player2ID, 'red', 'orange',
+		'yellow', 'beige', this.canvas.width, this.canvas.height))
 
 		// Call goal reset to put everything in starting positions
 		this.goalReset()

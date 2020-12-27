@@ -1,0 +1,44 @@
+body, html {
+	height: 100%;
+}
+.navBar {
+	margin: auto;
+	position: fixed;
+	width: 100%;
+	height: 50px;
+	background-color: #E8A87C;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.navLink {
+	/* Need height 100% or there is weird gap between the navLink & navBar */
+	height: 100%;
+	padding: 10px;
+	color: #3e3d59;
+	font-size: 24px;
+}
+.navLink:hover {
+	background-color: #3e3d59;
+	color: #E8A87C;
+}
+a {
+	color: #E8A87C;
+}
+.contentBoxes {
+	height: 100%;
+	color: beige;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+#gameLink {
+	font-size: 24px;
+	padding: 20px;
+	border: 5px solid #E8A87C;
+}
+#gameLink:hover {
+	background-color: #E8A87C;
+	color: #3e3d59;
+}

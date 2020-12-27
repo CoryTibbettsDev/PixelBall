@@ -1,0 +1,17 @@
+/*
+Colors
+#3e3d59 background: dark gray/blue
+*/
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+	text-align: center;
+}
+html, body {
+	background-color: #3e3d59;
+}
+a {
+	/* Gets rid of underline for link */
+	text-decoration: none;
+}

@@ -1,27 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PixelBall</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Pixelball</title>
 
-    <link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/all.css">
+	<link rel="stylesheet" href="css/index.css">
 </head>
 <body>
-	<h1 class="homeElement">Hello and Welcome to PixelBall</h1>
-	<p class="homeElement">Do not let this websites appearance put you off</p>
-	<p class="homeElement">The guy who made it is very tired</p>
+	<div class="navBar">
+		<a class="navLink" href="game.html">Play</a>
+		<a class="navLink" href="#howToPlay">How To Play</a>
+		<a class="navLink" href="#about">About</a>
+		<a class="navLink" href="#patchNotes">Patch Notes</a>
+	</div>
 
-	<button type="button" class="homeElement" id="matchmakingButton">
-		Join Game Queue
-	</button>
-
-	<canvas class="gameElement" id="canvas"></canvas>
-
-	<noscript>
-		You need javascript enabled to play PixelBall unfortunately
-	</noscript>
-    <script src="/socket.io/socket.io.js"></script>
-	<script type="module" src="js/game_modules/game_client.js"></script>
+	<div class="contentBoxes" id="play">
+		<a id="gameLink" href="game.html">Play PixelBall</a>
+	</div>
+	<div class="contentBoxes" id="howToPlay">
+		<h1>How To Play</h1>
+		<p>
+			Move you character with the arrow keys or WASD. Create a teleporter
+			exit with E and an entrance with Q. If the ball passes through your
+			entrance and you have an exit the ball with be teleported there.
+			You can have one exit and up to two entrances. You can also create
+			a barrier with R. If the ball hits it it will reverse direction
+			horizontally. You spawn infront of your goal defend it while trying
+			to score on your opponents, first to three wins.
+		</p>
+	</div>
+	<div class="contentBoxes" id="about">
+		<h1>About</h1>
+		<p>
+			PixelBall is an online multiplayer browser game designed to be
+			competitive and fun. It took inspiration from pong, air hockey and
+			other such games but puts it's own twist of the game by making the
+			player indirectly affect the ball by creating teleporters and
+			barriers instead of just blocking it themselves.
+		</p>
+	</div>
+	<div class="contentBoxes" id="patchNotes">
+		<h1>Patch Notes</h1>
+		<h2 id="1.1.0">1.1.0</h2>
+			<p>
+				Second release of PixelBall. Matchmaking bug appears to be fixed
+				and the site actually looks ok with more information on how to
+				play, an about section and patch notes. I bumped versions
+				because it felt like there were enough big changes.
+			</p>
+		<h2 id="1.0.0">1.0.0</h2>
+		<p>
+			This is the first release for PixelBall. It looks terrible and there
+			is a small matchmaking bug but it does work and is playable so
+			I guess we take those.
+		</p>
+	</div>
 </body>
 </html>

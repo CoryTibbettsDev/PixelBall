@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelBall</title>
+
+    <link rel="stylesheet" href="css/all.css">
+	<link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+	<h1 class="homeElement">Press the Button Below to Join the Game Queue</h1>
+
+	<button type="button" class="homeElement" id="matchmakingButton">
+		Join Game Queue
+	</button>
+
+	<canvas class="gameElement" id="canvas"></canvas>
+
+	<noscript>
+		You Need Javascript Enabled to Play PixelBall Unfortunately
+	</noscript>
+    <script src="/socket.io/socket.io.js"></script>
+	<script type="module" src="js/game_modules/game_client.js"></script>
+</body>
+</html>

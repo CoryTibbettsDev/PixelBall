@@ -2,7 +2,8 @@ import { Barrier } from './barrier.js'
 import { Tele } from './tele.js'
 
 export class Player {
-	constructor(side, id, color, canvasWidth, canvasHeight) {
+	constructor(side, id, color, teleEntColor,
+		teleExtColor, barrierColor, canvasWidth, canvasHeight) {
 		this.w = 50
 		this.h = 100
 		this.x = this.xStartingPosition()
@@ -12,6 +13,9 @@ export class Player {
 		this.speed = 0.3
 		this.moveSpeed = 0
 		this.color = color
+		this.teleEntColor = teleEntColor
+		this.teleExtColor = teleExtColor
+		this.barrierColor = barrierColor
 		this.teleEnts = []
 		this.teleExts = []
 		this.barriers = []
@@ -54,7 +58,7 @@ export class Player {
 		// Create game elements teleports/barriers
 		// Create Tele entrance
 		if(this.keyState['q'] && !this.oldKeyState['q']) {
-			this.teleEnts.push(new Tele(this.x, this.y, 50, 'green'))
+			this.teleEnts.push(new Tele(this.x, this.y, 50, this.teleEntColor))
 			if(this.teleEnts.length > 2) {
 				// Removes first tele from array if there are too many in array
 				this.teleEnts.splice(0, 1)
@@ -62,7 +66,7 @@ export class Player {
 		}
 		// Create Tele exit
 		if(this.keyState['e'] && !this.oldKeyState['e']) {
-			this.teleExts.push(new Tele(this.x, this.y, 15, 'red'))
+			this.teleExts.push(new Tele(this.x, this.y, 15, this.teleExtColor))
 			if(this.teleExts.length > 1) {
 				// Removes first from array if there are too many
 				this.teleExts.splice(0, 1)
@@ -70,7 +74,7 @@ export class Player {
 		}
 		// Create barrier
 		if(this.keyState['r'] && !this.oldKeyState['r']) {
-			this.barriers.push(new Barrier(this.x, this.y))
+			this.barriers.push(new Barrier(this.x, this.y, this.barrierColor))
 			if(this.barriers.length > 1) {
 				// Removes barries if there is already one
 				this.barriers.splice(0, 1)

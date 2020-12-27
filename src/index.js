@@ -24,6 +24,8 @@ export const io = socket(server)
 // Tells express to server static files from the public folder
 // Can put another folder here if we want multiple folders
 // They are accessed to look for the file in the order they are declared
+// Cannot use __dirname with es6 modules
+// https://nodejs.org/api/esm.html#esm_no_filename_or_dirname
 app.use(express.static('public'))
 
 // Express 404 error response https://expressjs.com/en/starter/faq.html

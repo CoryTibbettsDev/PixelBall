@@ -52,7 +52,6 @@ export class Ball {
 					for(let j of playerArray) {
 						if(i.side == j.side) {
 							j.score++
-							console.log(j.score);
 							if (j.score >= 3) {
 								this.gameEnds = true
 							}

@@ -28,7 +28,12 @@ export function playerConnect() {
 			console.log('disconnect', socket.id);
 			// On user disconnect find socket in the queue array and remove it
 			let index = inQueue.indexOf(socket)
-			inQueue.splice(socket, 1)
+			// If statement checks if the socket is in the array and
+			// if it is then it removes it I imagine there will be a bug if we
+			// do not do this so I think this is safer but maybe unnecessary
+			if (index !== -1) {
+				inQueue.splice(index, 1)
+			}
 		})
 
 		// Recieving keyState and what we do with it

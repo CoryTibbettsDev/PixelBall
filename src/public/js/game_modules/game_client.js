@@ -3,32 +3,38 @@
 // different domain we don't so don't need to pass anything in
 let queing = false
 
-let button = document.getElementById('matchmakingButton')
-button.addEventListener("click", startMatchmaking);
-
+// Init socket globally makes things easier for past me future me can fuck off
 let socket;
 function startMatchmaking() {
 	// Add user to que if not in que and change button
 	if (!queing) {
-		console.log('hello');
 		socket = io.connect()
-		button = document.getElementById('matchmakingButton')
-		button.innerHTML = "Leave Game Queue"
-		queing = true
+		setPlayerInQueue()
 
 		socket.on('joinGame', gameMode)
 		function gameMode(gameRoom) {
-			console.log('got it');
 			showGameElements()
 			callGame(socket)
 		}
 	} else {
 		// Disconnect from server and server will remove from que
 		socket.disconnect()
-		// Change button back
-		button.innerHTML = "Join Game Queue"
-		queing = false
+		setPlayerOutOfQueue()
 	}
+}
+
+let button = document.getElementById('matchmakingButton')
+button.addEventListener("click", startMatchmaking);
+// These functions let use easily set the queing and button status
+function setPlayerInQueue() {
+	// Set button to in queue status
+	button.innerHTML = "Leave Game Queue"
+	queing = true
+}
+function setPlayerOutOfQueue() {
+	// Change button back
+	button.innerHTML = "Join Game Queue"
+	queing = false
 }
 
 import { Game } from './game.js'
@@ -113,6 +119,7 @@ function callGame(socket) {
 	}
 
 	socket.on('server update', serverUpdate)
+	// Sets values of different game elements equal to the server's versions
 	function serverUpdate(gameData) {
 		gameData.balls.forEach((item, i) => {
 			game.balls[i].xvel = item.xvel
@@ -123,6 +130,7 @@ function callGame(socket) {
 		gameData.players.forEach((item, i) => {
 			game.players[i].x = item.x
 			game.players[i].y = item.y
+			game.players[i].score = item.score
 
 			// Create new teles that are equal to the teles server sent I cannot
 			// set the arrays equal to one another because the functions attached
@@ -143,17 +151,15 @@ function callGame(socket) {
 	}
 	socket.on('gameEnds', gameEnds)
 	function gameEnds() {
-		console.log('game over');
 		createMenu()
+		setPlayerOutOfQueue()
 	}
 
 	function createMenu() {
 		// create a new div element
 		const newDiv = document.createElement("div");
-
 		// and give it some content
 		const newContent = document.createTextNode("The game is over");
-
 		const newButton = document.createElement("button")
 		// Give button text
 		newButton.innerHTML = "Click For Homepage"
@@ -161,7 +167,6 @@ function callGame(socket) {
 			showHomeElements()
 			newDiv.style.display = "none"
 		}
-
 		// add the text node to the newly created div
 		newDiv.appendChild(newContent);
 		newDiv.appendChild(newButton);
