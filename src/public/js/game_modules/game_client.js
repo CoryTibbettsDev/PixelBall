@@ -1,40 +1,101 @@
 // We get io from linking to socket.io-client on html page
 // Create socket establish connection requires URL of site if served from
 // different domain we don't so don't need to pass anything in
-let queing = false
-
 // Init socket globally makes things easier for past me future me can fuck off
 let socket;
+
+let queing = false
 function startMatchmaking() {
 	// Add user to que if not in que and change button
 	if (!queing) {
 		socket = io.connect()
-		setPlayerInQueue()
+		setClient.inQueue()
 
 		socket.on('joinGame', gameMode)
 		function gameMode(gameRoom) {
-			showGameElements()
+			display.showGame()
 			callGame(socket)
+			// Removed from queue because they are in game now
+			setClient.outOfQueue()
 		}
 	} else {
-		// Disconnect from server and server will remove from que
+		// Disconnect from server and server will remove from queue
 		socket.disconnect()
-		setPlayerOutOfQueue()
+		setClient.outOfQueue()
 	}
 }
 
-let button = document.getElementById('matchmakingButton')
-button.addEventListener("click", startMatchmaking);
-// These functions let use easily set the queing and button status
-function setPlayerInQueue() {
-	// Set button to in queue status
-	button.innerHTML = "Leave Game Queue"
-	queing = true
+let matchmakingButton = document.getElementById('matchmakingButton')
+matchmakingButton.addEventListener("click", startMatchmaking);
+// This class lets use easily set the client in and out of queue
+class SetClientStatus {
+	constructor(button) {
+		this.button = button
+	}
+	inQueue() {
+		this.button.innerHTML = "Leave Game Queue"
+		queing = true
+	}
+	outOfQueue() {
+		// Change button back
+		this.button.innerHTML = "Join Game Queue"
+		queing = false
+	}
 }
-function setPlayerOutOfQueue() {
-	// Change button back
-	button.innerHTML = "Join Game Queue"
-	queing = false
+let setClient = new SetClientStatus(matchmakingButton)
+
+let homeElements = document.getElementsByClassName('homeElement')
+let gameElements = document.getElementsByClassName('gameElement')
+let overlayMenu = document.getElementById('overlayMenu')
+console.log(overlayMenu);
+// Controls what html elements are displayed
+class Display {
+	constructor(homeElements, gameElements, overlayMenu) {
+		this.homeElements = homeElements
+		this.gameElements = gameElements
+		this.overlayMenu = overlayMenu
+	}
+	setDisplay(elementArray, displayType) {
+		for (let i = 0; i < elementArray.length; i++) {
+			elementArray[i].style.display = displayType
+		}
+	}
+	showHome() {
+		this.setDisplay(this.gameElements, "none")
+		this.setDisplay(this.homeElements, "block")
+	}
+	showGame() {
+		this.setDisplay(this.homeElements, "none")
+		this.setDisplay(this.gameElements, "block")
+	}
+	showOverlayMenu() {
+		this.overlayMenu.style.display = "block"
+	}
+	hideOverlayMenu() {
+		this.overlayMenu.style.display = "none"
+	}
+}
+let display = new Display(homeElements, gameElements, overlayMenu)
+display.showHome()
+
+// OverlayMenu buttons and what they do
+let toHomeBtn = document.getElementById('toHomeBtn')
+toHomeBtn.addEventListener("click", redirectToHome)
+// Probably don't need a function for this but this is easy right now
+function redirectToHome() {
+	// Redirects to index.html which means it reloads entire page to go there
+	// Don't think there is a problem with doing that right now
+	window.location.href = '/'
+}
+let playAgainBtn = document.getElementById('playAgainBtn')
+playAgainBtn.addEventListener("click", reQueue)
+// Shows home elements and puts them in queue again with one click
+function reQueue() {
+	display.hideOverlayMenu()
+	display.showHome()
+	// Call startMatchmaking to begin process again and we took care of the
+	// visual stuff above
+	startMatchmaking()
 }
 
 import { Game } from './game.js'
@@ -43,27 +104,6 @@ import { Barrier } from './barrier.js'
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d', { alpha: false });
-
-let homeElements = document.querySelectorAll('.homeElement')
-let gameElements = document.querySelectorAll('.gameElement')
-
-function showHomeElements() {
-	for (let i = 0; i < gameElements.length; i++) {
-		gameElements[i].style.display = "none"
-	}
-	for (let j = 0; j < homeElements.length; j++) {
-		homeElements[j].style.display = "block"
-	}
-}
-showHomeElements()
-function showGameElements() {
-	for (let i = 0; i < gameElements.length; i++) {
-		gameElements[i].style.display = "block"
-	}
-	for (let j = 0; j < homeElements.length; j++) {
-		homeElements[j].style.display = "none"
-	}
-}
 
 function callGame(socket) {
 	let gameRoom;
@@ -151,26 +191,6 @@ function callGame(socket) {
 	}
 	socket.on('gameEnds', gameEnds)
 	function gameEnds() {
-		createMenu()
-		setPlayerOutOfQueue()
-	}
-
-	function createMenu() {
-		// create a new div element
-		const newDiv = document.createElement("div");
-		// and give it some content
-		const newContent = document.createTextNode("The game is over");
-		const newButton = document.createElement("button")
-		// Give button text
-		newButton.innerHTML = "Click For Homepage"
-		newButton.onclick = function() {
-			showHomeElements()
-			newDiv.style.display = "none"
-		}
-		// add the text node to the newly created div
-		newDiv.appendChild(newContent);
-		newDiv.appendChild(newButton);
-
-		document.body.insertBefore(newDiv, canvas);
+		display.showOverlayMenu()
 	}
 }

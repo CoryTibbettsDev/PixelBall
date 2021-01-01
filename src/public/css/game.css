@@ -11,6 +11,26 @@ canvas {
     position: absolute;
     background-color: #E8A87C;
 }
+.overlayMenu {
+	position: fixed;
+	z-index: 2;
+	display: none;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(100, 100, 100, 0.5);
+}
+/* Seperate div so we can center the overlayMenuItems */
+#overlayMenuItems {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	-ms-transform: translate(-50%, -50%);
+}
 .homeElement {
 	margin-top: 50px;
 	margin-bottom: 50px;
