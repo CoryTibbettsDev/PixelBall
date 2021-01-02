@@ -47,7 +47,6 @@ let setClient = new SetClientStatus(matchmakingButton)
 let homeElements = document.getElementsByClassName('homeElement')
 let gameElements = document.getElementsByClassName('gameElement')
 let overlayMenu = document.getElementById('overlayMenu')
-console.log(overlayMenu);
 // Controls what html elements are displayed
 class Display {
 	constructor(homeElements, gameElements, overlayMenu) {
@@ -98,9 +97,9 @@ function reQueue() {
 	startMatchmaking()
 }
 
-import { Game } from './game.js'
-import { Tele } from './tele.js'
-import { Barrier } from './barrier.js'
+import { Game } from './game_modules/game.js'
+import { Tele } from './game_modules/tele.js'
+import { Barrier } from './game_modules/barrier.js'
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d', { alpha: false });
