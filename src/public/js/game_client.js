@@ -190,6 +190,7 @@ function callGame(socket) {
 	}
 	socket.on('gameEnds', gameEnds)
 	function gameEnds() {
+		window.cancelAnimationFrame(game.rafID)
 		display.showOverlayMenu()
 	}
 }

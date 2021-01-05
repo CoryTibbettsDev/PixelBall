@@ -18,7 +18,12 @@ export class Game {
 		this.ctx = ctx
 		this.gameRoom = gameRoom
 		this.gameEnds = false
+		// So we can stop server loop
 		this.interval = function() {}
+		// Stores ID so we can stop client loop with window.cancelAnimationFrame
+		// Needs to be updated every loop so we have the right ID
+		// Used in this.clientLoop and this.startClientLoop
+		this.rafID = function() {}
 	}
 	// Need to call whenever a new game is created
 	createGamePieces(player1ID, player2ID) {
@@ -130,7 +135,7 @@ export class Game {
 		// Have to use arrow function to call clientLoop instead of just passing
 		// it into requestAnimationFrame because otherwise this keyword gets
 		// reset to window object when called
-		window.requestAnimationFrame((timestamp) => {
+		this.rafID = window.requestAnimationFrame((timestamp) => {
 			this.clientLoop(timestamp)
 		})
 		// timestamp can be NaN for the first couple loops sometimes which
@@ -149,7 +154,10 @@ export class Game {
 	// keep handing the callback from requestAnimationFrame to each subsequent
 	// function until we get to the actual clientLoop
 	startClientLoop() {
-		window.requestAnimationFrame((timestamp) => {
+		// Set rafID so we can stop animation loop
+		// Need to set rafID everyloop so we always are referencing the right
+		// ID when we do want to stop the loop
+		this.rafID = window.requestAnimationFrame((timestamp) => {
 			this.clientLoop(timestamp)
 		})
 	}
