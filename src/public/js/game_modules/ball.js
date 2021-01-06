@@ -50,7 +50,9 @@ export class Ball {
 					this.y - this.r < i.y + i.h // Bottom
 				) {
 					for(let j of playerArray) {
-						if(i.side == j.side) {
+						// Check if side is not equal to because the player that
+						// scored is the opposite of the goal that got scored on
+						if(i.side !== j.side) {
 							j.score++
 							if (j.score >= 3) {
 								this.gameEnds = true

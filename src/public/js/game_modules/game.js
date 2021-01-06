@@ -28,11 +28,8 @@ export class Game {
 	// Need to call whenever a new game is created
 	createGamePieces(player1ID, player2ID) {
 		// Add goals
-		this.goals.push(new Goal('left', 0,
-		this.ctx, this.canvas.width, this.canvas.height))
-		// Hard code goal width need better solution
-		this.goals.push(new Goal('right', this.canvas.width - 50,
-		this.ctx, this.canvas.width, this.canvas.height))
+		this.goals.push(new Goal('left', this.canvas.width, this.canvas.height))
+		this.goals.push(new Goal('right', this.canvas.width, this.canvas.height))
 
 		// Add balls
 		this.balls.push(new Ball(this.canvas.width, this.canvas.height))
