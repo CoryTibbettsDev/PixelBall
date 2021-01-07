@@ -50,6 +50,10 @@ function startGame(games, gameRoom, io, socket, player1ID, player2ID) {
 	// Create game pieces pass in socketIDs we got on connection
 	games[gameRoom].createGamePieces(player1ID, player2ID)
 
+	// Telling the clients which player they are in the game
+	io.to(player1ID).emit('whichPlayer', 'player1')
+	io.to(player2ID).emit('whichPlayer', 'player2')
+
 	io.to(gameRoom).emit('start loop', gameRoom)
 	// Pass io into serverloop so it can sent info to game clients
 	games[gameRoom].startServerLoop(io)

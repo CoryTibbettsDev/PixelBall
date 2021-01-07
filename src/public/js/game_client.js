@@ -111,8 +111,61 @@ function callGame(socket) {
 	canvas.width = game.canvas.width
 	canvas.height = game.canvas.height
 
-	// Create the pieces for the game must happen before game loop is started
-	game.createGamePieces()
+	// Stuff happens on connection
+	socket.on('connect', () => {
+	    console.log('connected on socket', socket.id);
+	});
+
+	// Defining the colors we want the player and their elements to be
+	// TODO: let the client pick their colors
+	let clientColors = {
+		player: 'lightblue',
+		teleEnt: 'green',
+		teleExt: 'blue',
+		barrier: 'turqoise'
+	}
+	let oppColors = {
+		player: 'red',
+		teleEnt: 'orange',
+		teleExt: 'yellow',
+		barrier: 'beige'
+	}
+	let playerColors = {
+		p1Colors: {},
+		p2Colors: {}
+	}
+	// Listen for event that tells us which player the client is
+	// Set the client and opponent colors according to which player we are told
+	// the client is
+	socket.on('whichPlayer', setPlayerInfo)
+	function setPlayerInfo(player) {
+		if (player == 'player1') {
+			playerColors.p1Colors = clientColors
+			playerColors.p2Colors = oppColors
+		} else if (player == 'player2') {
+			playerColors.p1Colors = oppColors
+			playerColors.p2Colors = clientColors
+		} else {
+			console.log('Never got player info');
+		}
+	}
+
+	// Tells game to startup the mainLoop
+	socket.on('start loop', startLoop)
+	// Starts loop on clientside
+	function startLoop(gameRoom) {
+		// Need arrow function so scope is not redifined
+		(() => {
+			started = true
+			game.gameRoom = gameRoom
+			// Create the pieces for the game must happen before game loop
+			game.createGamePieces()
+			// Set each player colors
+			game.players[0].colors = playerColors.p1Colors
+			game.players[1].colors = playerColors.p2Colors
+			game.startClientLoop()
+		})()
+	}
 
 	// Handling player input
 	let keyState = {}
@@ -134,27 +187,11 @@ function callGame(socket) {
 		sendKeyState(keyState)
 	}, true)
 	function sendKeyState(keyState) {
-		// Have to check if game is started before sending stuff so we know server
-		// can except input
+		// Have to check if game is started before sending stuff so we know
+		// server can except input
 		if (started) {
 			socket.emit('clientKeyState', keyState)
 		}
-	}
-
-	// Stuff happens on connection
-	socket.on('connect', () => {
-	    console.log('connected on socket', socket.id);
-	});
-	// Tells game to startup the mainLoop
-	socket.on('start loop', startLoop)
-
-	// Starts loop on clientside
-	function startLoop(gameRoom) {
-		(() => {
-			started = true
-			game.gameRoom = gameRoom
-			game.startClientLoop()
-		})()
 	}
 
 	socket.on('server update', serverUpdate)
@@ -174,15 +211,15 @@ function callGame(socket) {
 			// Create new teles that are equal to the teles server sent I cannot
 			// set the arrays equal to one another because the functions attached
 			// to teles and barries are lost so they won't draw
-			for(let j = 0; j < item.teleEnts.length; j++) {
+			for (let j = 0; j < item.teleEnts.length; j++) {
 				game.players[i].teleEnts[j] = new Tele(item.teleEnts[j].x,
-				item.teleEnts[j].y, item.teleEnts[j].r, item.teleEnts[j].color)
+				item.teleEnts[j].y, item.teleEnts[j].r)
 			}
-			for(let k = 0; k < item.teleExts.length; k++) {
+			for (let k = 0; k < item.teleExts.length; k++) {
 				game.players[i].teleExts[k] = new Tele(item.teleExts[k].x,
-				item.teleExts[k].y, item.teleExts[k].r, item.teleExts[k].color)
+				item.teleExts[k].y, item.teleExts[k].r)
 			}
-			for(let l = 0; l < item.barriers.length; l++) {
+			for (let l = 0; l < item.barriers.length; l++) {
 				game.players[i].barriers[l] = new Barrier(item.barriers[l].x,
 				item.barriers[l].y)
 			}

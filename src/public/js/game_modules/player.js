@@ -2,29 +2,31 @@ import { Barrier } from './barrier.js'
 import { Tele } from './tele.js'
 
 export class Player {
-	constructor(side, id, color, teleEntColor,
-		teleExtColor, barrierColor, canvasWidth, canvasHeight) {
+	constructor(side, id, canvasWidth, canvasHeight) {
+		this.side = side
+		this.id = id
+		this.canvasWidth = canvasWidth
+		this.canvasHeight = canvasHeight
+		this.colors = {
+			player: 'black',
+			teleEnt: 'black',
+			teleExt: 'black',
+			barrier: 'black'
+		}
 		this.w = 50
 		this.h = 100
 		this.x = this.xStartingPosition()
 		this.y = this.yStartingPosition
-		this.canvasWidth = canvasWidth
-		this.canvasHeight = canvasHeight
 		this.speed = 0.3
 		this.moveSpeed = 0
-		this.color = color
-		this.teleEntColor = teleEntColor
-		this.teleExtColor = teleExtColor
-		this.barrierColor = barrierColor
 		this.teleEnts = []
 		this.teleExts = []
 		this.barriers = []
 		this.keyState = {}
 		this.oldKeyState = {}
 		this.score = 0
-		this.id = id
-		this.side = side
 		this.yStartingPosition = canvasHeight/2 - this.h/2
+		this.scoreTextSize = 48
 	}
 	xStartingPosition() {
 		let xPos;
@@ -58,7 +60,7 @@ export class Player {
 		// Create game elements teleports/barriers
 		// Create Tele entrance
 		if(this.keyState['q'] && !this.oldKeyState['q']) {
-			this.teleEnts.push(new Tele(this.x, this.y, 50, this.teleEntColor))
+			this.teleEnts.push(new Tele(this.x, this.y, 50))
 			if(this.teleEnts.length > 2) {
 				// Removes first tele from array if there are too many in array
 				this.teleEnts.splice(0, 1)
@@ -66,7 +68,7 @@ export class Player {
 		}
 		// Create Tele exit
 		if(this.keyState['e'] && !this.oldKeyState['e']) {
-			this.teleExts.push(new Tele(this.x, this.y, 15, this.teleExtColor))
+			this.teleExts.push(new Tele(this.x, this.y, 15))
 			if(this.teleExts.length > 1) {
 				// Removes first from array if there are too many
 				this.teleExts.splice(0, 1)
@@ -74,7 +76,7 @@ export class Player {
 		}
 		// Create barrier
 		if(this.keyState['r'] && !this.oldKeyState['r']) {
-			this.barriers.push(new Barrier(this.x, this.y, this.barrierColor))
+			this.barriers.push(new Barrier(this.x, this.y))
 			if(this.barriers.length > 1) {
 				// Removes barries if there is already one
 				this.barriers.splice(0, 1)
@@ -107,14 +109,27 @@ export class Player {
 		this.y = this.yStartingPosition
 	}
 	draw(ctx) {
+		// Draw the player
 		ctx.beginPath()
 		ctx.rect(this.x, this.y, this.w, this.h)
 		ctx.closePath()
-		ctx.fillStyle = this.color
+		ctx.fillStyle = this.colors.player
 		ctx.fill()
 
+		// Draw the elements associated with each player
+		for (let i = 0; i < this.teleEnts.length; i++) {
+			this.teleEnts[i].draw(ctx, this.colors.teleEnt)
+		}
+		for (let i = 0; i < this.teleExts.length; i++) {
+			this.teleExts[i].draw(ctx, this.colors.teleExt)
+		}
+		for (let i = 0; i < this.barriers.length; i++) {
+			this.barriers[i].draw(ctx, this.colors.barrier)
+		}
+
 		// Draw text for the score
-		ctx.font = '48px serif';
-		ctx.fillText(this.score, this.xStartingPosition(), this.yStartingPosition);
+		ctx.font = `${this.scoreTextSize}px serif`;
+		ctx.fillStyle = this.colors.player
+		ctx.fillText(this.score, this.xStartingPosition(), this.scoreTextSize + 2);
 	}
 }

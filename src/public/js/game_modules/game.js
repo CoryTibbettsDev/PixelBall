@@ -23,7 +23,7 @@ export class Game {
 		// Stores ID so we can stop client loop with window.cancelAnimationFrame
 		// Needs to be updated every loop so we have the right ID
 		// Used in this.clientLoop and this.startClientLoop
-		this.rafID = function() {}
+		this.rafID = 0
 	}
 	// Need to call whenever a new game is created
 	createGamePieces(player1ID, player2ID) {
@@ -35,10 +35,10 @@ export class Game {
 		this.balls.push(new Ball(this.canvas.width, this.canvas.height))
 
 		// Add players
-		this.players.push(new Player('left', player1ID, 'lightblue', 'green',
-		'purple', 'turqoise', this.canvas.width, this.canvas.height))
-		this.players.push(new Player('right', player2ID, 'red', 'orange',
-		'yellow', 'beige', this.canvas.width, this.canvas.height))
+		this.players.push(new Player('left', player1ID, this.canvas.width,
+		this.canvas.height))
+		this.players.push(new Player('right', player2ID, this.canvas.width,
+		this.canvas.height))
 
 		// Call goal reset to put everything in starting positions
 		this.goalReset()
@@ -70,23 +70,6 @@ export class Game {
 		}
 		io.to(this.gameRoom).emit('server update', gameData)
 	}
-	// Too much shit in here to just use forEach to loop through I think
-	drawPlayers(ctx) {
-		for(let i = 0; i < this.players.length; i++) {
-			this.players[i].draw(ctx)
-			// Loop within loop to iterate through players and the arrays
-			// associated with them like teleEnts teleExts etc.
-			for (let j = 0; j < this.players[i].teleEnts.length; j++) {
-				this.players[i].teleEnts[j].draw(ctx)
-			}
-			for (let k = 0; k < this.players[i].teleExts.length; k++) {
-				this.players[i].teleExts[k].draw(ctx)
-			}
-			for (let l = 0; l < this.players[i].barriers.length; l++) {
-				this.players[i].barriers[l].draw(ctx)
-			}
-		}
-	}
 	// Important functions that go in game loop
 	update(delta) {
 		// Movement and update functions go here
@@ -117,8 +100,9 @@ export class Game {
 		ctx.fillStyle = 'gray'
 		ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
 		// Draw all the game elements
-		this.drawPlayers(ctx)
-
+		this.players.forEach((item, i) => {
+			item.draw(ctx)
+		});
 		this.balls.forEach((item, i) => {
 			item.draw(ctx)
 		});
