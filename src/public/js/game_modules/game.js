@@ -146,11 +146,6 @@ export class Game {
 		this.delta = this.timestamp - this.oldTimestamp || 0
 		this.oldTimestamp = this.timestamp || 0
 
-		// Set function with game.setBegin pass in function
-		// Funtion for processing input or other things that need to happen
-		// before update and draw
-		// this.begin()
-
 		this.update(this.delta)
 
 		// Functions for things that need to happen after everything

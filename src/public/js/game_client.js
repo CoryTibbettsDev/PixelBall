@@ -5,30 +5,32 @@
 let socket;
 
 let queing = false
+
+let matchmakingButton = document.getElementById('matchmakingButton')
+matchmakingButton.addEventListener("click", startMatchmaking);
 function startMatchmaking() {
 	// Add user to que if not in que and change button
 	if (!queing) {
 		socket = io.connect()
-		setClient.inQueue()
+		clientStatus.inQueue()
 
 		socket.on('joinGame', gameMode)
 		function gameMode(gameRoom) {
 			display.showGame()
+			// callGame does setup for game and starts the game loop
 			callGame(socket)
 			// Removed from queue because they are in game now
-			setClient.outOfQueue()
+			clientStatus.outOfQueue()
 		}
 	} else {
 		// Disconnect from server and server will remove from queue
 		socket.disconnect()
-		setClient.outOfQueue()
+		clientStatus.outOfQueue()
 	}
 }
 
-let matchmakingButton = document.getElementById('matchmakingButton')
-matchmakingButton.addEventListener("click", startMatchmaking);
 // This class lets use easily set the client in and out of queue
-class SetClientStatus {
+class ClientStatus {
 	constructor(button) {
 		this.button = button
 	}
@@ -42,39 +44,14 @@ class SetClientStatus {
 		queing = false
 	}
 }
-let setClient = new SetClientStatus(matchmakingButton)
+let clientStatus = new ClientStatus(matchmakingButton)
 
+import { Display } from './client_modules/display.js'
 let homeElements = document.getElementsByClassName('homeElement')
 let gameElements = document.getElementsByClassName('gameElement')
 let overlayMenu = document.getElementById('overlayMenu')
-// Controls what html elements are displayed
-class Display {
-	constructor(homeElements, gameElements, overlayMenu) {
-		this.homeElements = homeElements
-		this.gameElements = gameElements
-		this.overlayMenu = overlayMenu
-	}
-	setDisplay(elementArray, displayType) {
-		for (let i = 0; i < elementArray.length; i++) {
-			elementArray[i].style.display = displayType
-		}
-	}
-	showHome() {
-		this.setDisplay(this.gameElements, "none")
-		this.setDisplay(this.homeElements, "block")
-	}
-	showGame() {
-		this.setDisplay(this.homeElements, "none")
-		this.setDisplay(this.gameElements, "block")
-	}
-	showOverlayMenu() {
-		this.overlayMenu.style.display = "block"
-	}
-	hideOverlayMenu() {
-		this.overlayMenu.style.display = "none"
-	}
-}
-let display = new Display(homeElements, gameElements, overlayMenu)
+let overlayTimer = document.getElementById('overlayTimer')
+let display = new Display(homeElements, gameElements, overlayMenu, overlayTimer)
 display.showHome()
 
 // OverlayMenu buttons and what they do
@@ -84,6 +61,8 @@ toHomeBtn.addEventListener("click", redirectToHome)
 function redirectToHome() {
 	// Redirects to index.html which means it reloads entire page to go there
 	// Don't think there is a problem with doing that right now
+	// Created whole function b/c I thought there might be something else I need
+	// to do on redirect later
 	window.location.href = '/'
 }
 let playAgainBtn = document.getElementById('playAgainBtn')
