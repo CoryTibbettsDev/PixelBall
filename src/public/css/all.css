@@ -7,6 +7,7 @@ Colors
     margin: 0;
     padding: 0;
 	text-align: center;
+	color: beige;
 }
 html, body {
 	background-color: #3e3d59;
@@ -14,4 +15,5 @@ html, body {
 a {
 	/* Gets rid of underline for link */
 	text-decoration: none;
+	color: #E8A87C;
 }
