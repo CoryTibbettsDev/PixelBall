@@ -10,7 +10,7 @@ export function playerConnect() {
 	// Object that stores all the games taking place currently
 	let games = {}
     io.on('connection', socket => {
-		console.log('got a new connection from:', socket.id);
+		// console.log('got a new connection from:', socket.id);
 		// Add player socket to queue
 		inQueue.push(socket)
 
@@ -25,7 +25,7 @@ export function playerConnect() {
 			inQueue.splice(0, 2)
 		}
 		socket.on('disconnect', (reason) => {
-			console.log('disconnect', socket.id);
+			// console.log('disconnect', socket.id);
 			// On user disconnect find socket in the queue array and remove it
 			let index = inQueue.indexOf(socket)
 			// If statement checks if the socket is in the array and

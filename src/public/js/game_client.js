@@ -83,36 +83,40 @@ import { Barrier } from './game_modules/barrier.js'
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d', { alpha: false });
 
+// Moved outside call game function so images are loaded on page load
+// Defining the colors we want the player and their elements to be
+let clientColors = {
+	playerImage: new Image(),
+	player: 'lightblue',
+	teleEnt: 'green',
+	teleExt: 'blue',
+	barrier: 'turqoise'
+}
+let oppColors = {
+	playerImage: new Image(),
+	player: 'red',
+	teleEnt: 'orange',
+	teleExt: 'yellow',
+	barrier: 'beige'
+}
+let playerColors = {
+	p1Colors: {},
+	p2Colors: {}
+}
+clientColors.playerImage.src = '../img/blue_player.png'
+oppColors.playerImage.src = '../img/red_player.png'
+
 function callGame(socket) {
-	let gameRoom;
-	const game = new Game(gameRoom, ctx)
+	const game = new Game(null, ctx)
 
 	canvas.width = game.canvas.width
 	canvas.height = game.canvas.height
 
 	// Stuff happens on connection
 	socket.on('connect', () => {
-	    console.log('connected on socket', socket.id);
+	    // console.log('connected on socket', socket.id);
 	});
 
-	// Defining the colors we want the player and their elements to be
-	// TODO: let the client pick their colors
-	let clientColors = {
-		player: 'lightblue',
-		teleEnt: 'green',
-		teleExt: 'blue',
-		barrier: 'turqoise'
-	}
-	let oppColors = {
-		player: 'red',
-		teleEnt: 'orange',
-		teleExt: 'yellow',
-		barrier: 'beige'
-	}
-	let playerColors = {
-		p1Colors: {},
-		p2Colors: {}
-	}
 	// Listen for event that tells us which player the client is
 	// Set the client and opponent colors according to which player we are told
 	// the client is
@@ -139,7 +143,7 @@ function callGame(socket) {
 			game.gameRoom = gameRoom
 			// Create the pieces for the game must happen before game loop
 			game.createGamePieces()
-			// Set each player colors
+			// Set each player's colors
 			game.players[0].colors = playerColors.p1Colors
 			game.players[1].colors = playerColors.p2Colors
 			game.startClientLoop()

@@ -8,6 +8,7 @@ export class Player {
 		this.canvasWidth = canvasWidth
 		this.canvasHeight = canvasHeight
 		this.colors = {
+			playerImage: null,
 			player: 'black',
 			teleEnt: 'black',
 			teleExt: 'black',
@@ -110,11 +111,12 @@ export class Player {
 	}
 	draw(ctx) {
 		// Draw the player
-		ctx.beginPath()
-		ctx.rect(this.x, this.y, this.w, this.h)
-		ctx.closePath()
-		ctx.fillStyle = this.colors.player
-		ctx.fill()
+		// ctx.beginPath()
+		// ctx.rect(this.x, this.y, this.w, this.h)
+		// ctx.closePath()
+		// ctx.fillStyle = this.colors.player
+		// ctx.fill()
+		ctx.drawImage(this.colors.playerImage, this.x, this.y)
 
 		// Draw the elements associated with each player
 		for (let i = 0; i < this.teleEnts.length; i++) {
